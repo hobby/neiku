@@ -9,10 +9,10 @@
 # $make clean [buildroot=<path>]    # clean
 #
 
-sh = ../sh/log.sh
+sh = ../sh/log.sh ../sh/cmdline.sh
 bin = ../sh/rpmbuild.bb
 
-specfile  = neiku-1-1.spec
+specfile  = neiku.spec
 buildroot = `pwd`/buildroot
 rpmdir    = `pwd`
 

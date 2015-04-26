@@ -1,6 +1,6 @@
 Name:      neiku
 Version:   1
-Release:   1
+Release:   2
 Group:     System Environment/Shells
 License:   GPL
 Packager:  Hobby <ku7d@qq.com>
@@ -32,6 +32,11 @@ neiku for every programmer.
 %clean
 
 %changelog
+* Sun Apr 26 2015 Hobby
+Version: 1 Release: 2
+cmdline.sh:
+-- make scripts easy with cmdline.
+
 * Sat Mar  7 2015 Hobby
 Version: 1 Release: 1
 log.sh:
