@@ -15,20 +15,16 @@
 alias ..='cd ../'
 alias ...='cd ../../'
 alias rm='rm -i'
-alias cp='cp -i'
+alias cp='cp'
 alias mv='mv -i'
-alias l='ls -l'
-alias ll='ls -l'
-alias la='ls -la'
+alias l='ls -l --color'
+alias ll='ls -l --color'
+alias la='ls -la --color'
 alias mk='make'
 alias grep='grep --color'
 alias tree='tree -C'
 
 # PS1 => user_name@ssh_ip:pwd:[#$] 
-# TODO:
-# (1) ssh_ip应该为当前连接中，ssh-server则的地址(目前暂时固定某张网卡的地址)
-# (2) 普通用户使用$，root用户使用#
-#ssh_ip=$(ip addr show dev eth2 | perl -ne '/inet ([\d.]+)/ && print $1')
 ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
 prompt=""
 if [ `whoami` = root ]

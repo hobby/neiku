@@ -1,0 +1,28 @@
+#
+# To use it, do:
+# ----you makefile----
+# include makefile.dir
+# 
+# DIRS= dir1 dir2
+# -------------------
+# $ make
+# $ make clean
+# $ make action=clean
+# $ make action=<what you want>
+
+DIRS=
+
+action=
+
+all:
+	@for subdir in $(DIRS); \
+	do \
+		$(MAKE) -C $$subdir $(action); \
+	done
+
+clean:
+	@for subdir in $(DIRS); \
+	do \
+		$(MAKE) -C $$subdir clean; \
+	done
+
