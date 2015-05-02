@@ -1,0 +1,41 @@
+#!/bin/bash
+#
+# An example for a bashrc file.
+#
+# Maintainer:   Neiku <ku7d@qq.com>
+# Last change:  2014 Dec 26
+# 
+# To use it, copy it to: ~/.bashrc
+#                   and: source ~/.bashrc
+#
+# vim:ts=4:sw=4:expandtab
+#
+
+# alias
+alias ..='cd ../'
+alias ...='cd ../../'
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+alias l='ls -l'
+alias ll='ls -l'
+alias la='ls -la'
+alias mk='make'
+alias grep='grep --color'
+alias tree='tree -C'
+
+# PS1 => user_name@ssh_ip:pwd:[#$] 
+# TODO:
+# (1) ssh_ip应该为当前连接中，ssh-server则的地址(目前暂时固定某张网卡的地址)
+# (2) 普通用户使用$，root用户使用#
+#ssh_ip=$(ip addr show dev eth2 | perl -ne '/inet ([\d.]+)/ && print $1')
+ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
+prompt=""
+if [ `whoami` = root ]
+then
+    prompt="#"
+else
+    prompt="$"
+fi
+export PROMPT_COMMAND='echo -ne "\033]0;$my_ip\007"'
+export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\\$prompt "
