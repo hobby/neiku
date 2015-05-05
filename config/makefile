@@ -1,4 +1,4 @@
 
 include ../makefile.dir
 
-DIRS = bash
+DIRS = bash git

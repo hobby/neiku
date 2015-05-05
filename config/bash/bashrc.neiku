@@ -14,13 +14,16 @@
 # alias
 alias ..='cd ../'
 alias ...='cd ../../'
-alias rm='rm -i'
+alias ....='cd ../../../'
+alias .....='cd ../../../../'
+alias rm='rm'
 alias cp='cp'
-alias mv='mv -i'
+alias mv='mv'
 alias l='ls -l --color'
 alias ll='ls -l --color'
 alias la='ls -la --color'
 alias mk='make'
+alias mkc='make clean'
 alias grep='grep --color'
 alias tree='tree -C'
 
@@ -35,3 +38,7 @@ else
 fi
 export PROMPT_COMMAND='echo -ne "\033]0;$my_ip\007"'
 export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\\$prompt "
+
+# utf-8 to gbk, gbk to utf-8
+alias u2g='iconv -f utf-8 -t gbk'
+alias g2u='iconv -f gbk -t utf-8'
