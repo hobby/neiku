@@ -26,6 +26,9 @@ alias mk='make'
 alias mkc='make clean'
 alias grep='grep --color'
 alias tree='tree -C'
+alias kall='killall'
+alias p='ps -elf | grep --color'
+alias ps?='ps -elf | grep --color'
 
 # PS1 => user_name@ssh_ip:pwd:[#$] 
 ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
