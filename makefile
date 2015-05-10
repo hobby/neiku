@@ -1,4 +1,5 @@
 
 include makefile.dir
 
-DIRS=config
+DIRS = config \
+       demo \

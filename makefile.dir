@@ -7,17 +7,17 @@
 # -------------------
 # $ make
 # $ make clean
-# $ make action=clean
-# $ make action=<what you want>
+# $ make ACTION=clean
+# $ make ACTION=<what you want>
 
 DIRS=
 
-action=
+ACTION=
 
 all:
 	@for subdir in $(DIRS); \
 	do \
-		$(MAKE) -C $$subdir $(action); \
+		$(MAKE) -C $$subdir $(ACTION); \
 	done
 
 clean:

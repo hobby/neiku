@@ -1,0 +1,105 @@
+
+# 一个C/C++公共的Makefile - neiku
+# 2012年 11月 11日 星期日 19:52:49 CST
+#
+# 依赖: 每个C/C++源文件的中间编译输出文件文件与源文件只是后缀不一样.
+#         
+# usage:
+# (1) 新建一个makefile
+# (2) 在makefile中inculde makefile.comm
+#
+# -- 构建bin文件
+# (3.1) 指定输出程序及输出程序的目标文件依赖, 如:
+#       prog: prog.o (prog.o可以来自prog.c或者prog.cpp)
+#
+# -- 构造lib文件
+# (3.2) 指定输出共享库除去lib前缀的文件名与共享库的目标文件依赖,如:
+#       diy.so: diy.o (diy.o可以来自diy.c或者diy.cpp)
+#
+# -- 自定义链接库
+# (3.3) 将新的库的参数加入到DIY_LIB变量中,如:
+#       DIY_LIB = -L/path/to/libdiy.so -ldiy
+#
+# -- 自定义头文件路径
+# (3.4) 将自定义头文件路径加入到DIY_INC变量中,如:
+#       DIY_INC = -I/path/to/include
+#
+# -- 自定义目标运行环境架构(交叉编译)
+# (3.5) 目前支持32位/64位架构的编译选项,如:
+#       make MACHINE=32 # 表示生成32位代码
+#       make MACHINE=64 # 表示生成64位代码
+#
+# change log:
+# 2012/11/14:
+#             (1) 加入自定义头文件目录特性
+# 2013/02/22:
+#             (2) 加入32/64位架构代码编译选项
+# 2013/03/03:
+#             (1) 加入.a归档文件编译规则
+#                 自动支持32/64位的.o文件的归档
+#             (2) 64位的so要求.o的编译期加入-fPIC选项
+#                 这会导致最終.o, so的体积会比32位的大一点
+# 2014/09/20: 
+# 			  (1) 环境变量存在性检测
+# 			  (2) 支持32/64交叉编译，默认以当前环境类型进行编译
+#
+# bug fix:
+# 2012/11/14: 
+#             修复需多文件链接时, 使用错误的内置变量.
+#             $^表示所有依赖, 而$<表示第一个依赖, 在链接时应该使用$^.
+# 2013/03/03:
+#             64位的so要求.o的编译期加入-fPIC选项
+#             这会导致最終.o, so的体积会比32位的大一点
+#
+
+##########################################################
+# 环境变量检查
+ifeq ($(NEIKU_PROJ_PATH), )
+ERROR:
+	@echo "check NEIKU_PROJ_PATH undefined, you can run:"
+	@echo " $$ cd /path/to/yaf"
+	@echo " $$ echo \"export NEIKU_PROJ_PATH=\`pwd\`\" >> ~/.bashrc"
+	@echo " $$ source ~/.bashrc"
+	@echo " $$ cd -"
+	@echo " $$ make"
+	@echo "now exit."
+endif
+
+##########################################################
+# 支持32/64位编译环境
+ifeq ($(shell uname -m), x86_64)
+COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib64
+else
+COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib
+endif
+
+# 支持32/64位交叉编译
+ifeq ($(MACHINE), 64)
+MACHINEFLAG=-m64
+COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib64
+endif
+ifeq ($(MACHINE), 32)
+MACHINEFLAG=-m32
+COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib
+endif
+
+COMM_LIB=-L$(COMM_LIB_PATH)
+COMM_INC=-I$(NEIKU_PROJ_PATH)/include
+
+ALL_INC=$(COMM_INC) $(DIY_INC)
+ALL_LIB=$(COMM_LIB) $(DIY_LIB)
+
+##########################################################
+.SUFFIXES: .o .cpp .c .so .a
+.o.a:
+	ar -r lib$@ $^
+.o.so:
+	g++ -fPIC $(MACHINEFLAG) -shared -o lib$@ $^ $(ALL_LIB)
+.c.o:
+	gcc -g $(MACHINEFLAG) -c $^ $(ALL_INC)
+#gcc -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
+.cpp.o:
+	g++ -g $(MACHINEFLAG) -c $^ $(ALL_INC)
+#g++ -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
+.o:
+	g++ -g $(MACHINEFLAG) -o $@ $^ $(ALL_LIB)
