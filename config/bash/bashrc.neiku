@@ -32,15 +32,13 @@ alias ps?='ps -elf | grep --color'
 
 # PS1 => user_name@ssh_ip:pwd:[#$] 
 ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
-prompt=""
+export PROMPT_COMMAND='echo -ne "\033]0;$my_ip\007"'
 if [ `whoami` = root ]
 then
-    prompt="#"
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]# "
 else
-    prompt="$"
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]$ "
 fi
-export PROMPT_COMMAND='echo -ne "\033]0;$my_ip\007"'
-export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\\$prompt "
 
 # utf-8 to gbk, gbk to utf-8
 alias u2g='iconv -f utf-8 -t gbk'
