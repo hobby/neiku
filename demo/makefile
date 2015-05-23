@@ -1,4 +1,5 @@
 
 include ../makefile.dir
 
-DIRS = singleton
+DIRS = singleton \
+       charset \

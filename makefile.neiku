@@ -93,13 +93,18 @@ ALL_LIB=$(COMM_LIB) $(DIY_LIB)
 .SUFFIXES: .o .cpp .c .so .a
 .o.a:
 	ar -r lib$@ $^
+
 .o.so:
-	g++ -fPIC $(MACHINEFLAG) -shared -o lib$@ $^ $(ALL_LIB)
+	g++ -fPIC -shared -o lib$@ $^ $(ALL_LIB)
+#g++ -fPIC $(MACHINEFLAG) -shared -o lib$@ $^ $(ALL_LIB)
+
 .c.o:
-	gcc -g $(MACHINEFLAG) -c $^ $(ALL_INC)
-#gcc -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
+	gcc -g -fPIC -c $^ $(ALL_INC)
+#gcc -g -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
+
 .cpp.o:
-	g++ -g $(MACHINEFLAG) -c $^ $(ALL_INC)
-#g++ -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
+	g++ -g -fPIC -c $^ $(ALL_INC)
+
 .o:
-	g++ -g $(MACHINEFLAG) -o $@ $^ $(ALL_LIB)
+	g++ -g -o $@ $^ $(ALL_LIB)
+#g++ -g $(MACHINEFLAG) -o $@ $^ $(ALL_LIB)

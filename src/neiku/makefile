@@ -1,0 +1,25 @@
+
+
+include ../../makefile.neiku
+
+DIY_INC = -I../../include/ \
+
+DIY_LIB = 
+
+VPATH =
+
+OUTPUT = libneiku.so libneiku.a
+
+ALL: $(OUTPUT)
+
+libneiku.so: charset.o
+	g++ -fPIC -shared -o $@ $^ $(ALL_LIB)
+	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
+
+libneiku.a: charset.o
+	ar -r $@ $^
+	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
+
+clean:
+	rm -f $(OUTPUT) *.o *.a *.so
+
