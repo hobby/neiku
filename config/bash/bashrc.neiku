@@ -41,5 +41,5 @@ else
 fi
 
 # utf-8 to gbk, gbk to utf-8
-alias u2g='iconv -f utf-8 -t gbk'
-alias g2u='iconv -f gbk -t utf-8'
+alias u2g='iconv -f utf-8 -t gb18030//ignore'
+alias g2u='iconv -f gbk -t utf-8//ignore'
