@@ -8,7 +8,7 @@ DIY_LIB =
 
 VPATH =
 
-OUTPUT = libneiku.a
+OUTPUT = libneiku.so
 
 ALL: $(OUTPUT)
 

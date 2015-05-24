@@ -6,22 +6,22 @@
 
 /*
  * 
- * gbk2312: Ó¢ÎÄÕ¼1¸ö×Ö½Ú£¬ÖÐÎÄÕ¼2¸ö×Ö½Ú
- * gbk: Ó¢ÎÄÕ¼1¸ö×Ö½Ú£¬ÖÐÎÄÕ¼2¸ö×Ö½Ú
- * gb18030: Ó¢ÎÄµã1¸ö×Ö½Ú£¬ÖÐÎÄÕ¼2¸ö(gb2312/gbk)»òÕß4¸ö×Ö½Ú(cjk-a/b)
+ * gbk2312: è‹±æ–‡å 1ä¸ªå­—èŠ‚ï¼Œä¸­æ–‡å 2ä¸ªå­—èŠ‚
+ * gbk: è‹±æ–‡å 1ä¸ªå­—èŠ‚ï¼Œä¸­æ–‡å 2ä¸ªå­—èŠ‚
+ * gb18030: è‹±æ–‡ç‚¹1ä¸ªå­—èŠ‚ï¼Œä¸­æ–‡å 2ä¸ª(gb2312/gbk)æˆ–è€…4ä¸ªå­—èŠ‚(cjk-a/b)
  * utf-8:
- *       0000~007f: 1xxx xxxx ¼´Õ¼ÓÃ1×Ö½Ú
- *       0080~07ff: 110x xxxx 10xx xxxx ¼´Õ¼ÓÃ2¸ö×Ö½Ú
- *       0800~ffff: 1110 xxxx 10xx xxxx 10xx xxxx ¼´Õ¼ÓÃ3¸ö×Ö½Ú(ÆäÖÐ4E00~9FA5ÊÇÖÐÎÄ£¬ËùÒÔÖÐÎÄ×Ö·ûÕ¼3¸ö×Ö½Ú)
+ *       0000~007f: 1xxx xxxx å³å ç”¨1å­—èŠ‚
+ *       0080~07ff: 110x xxxx 10xx xxxx å³å ç”¨2ä¸ªå­—èŠ‚
+ *       0800~ffff: 1110 xxxx 10xx xxxx 10xx xxxx å³å ç”¨3ä¸ªå­—èŠ‚(å…¶ä¸­4E00~9FA5æ˜¯ä¸­æ–‡ï¼Œæ‰€ä»¥ä¸­æ–‡å­—ç¬¦å 3ä¸ªå­—èŠ‚)
  *
  * */
 namespace neiku
 {
 
 /*
- * convert_charset: iconv_open/iconv/iconv_closeµÄ¼òµ¥·â×°
+ * charset_convert: iconv_open/iconv/iconv_closeçš„ç®€å•å°è£…
  */
-int convert_charset(const char *from, const char *to
+int charset_convert(const char *from, const char *to
                     , char *inbuf, size_t inlen
                     , char *outbuf, size_t outlen)
 {
@@ -36,8 +36,8 @@ int convert_charset(const char *from, const char *to
 }
 
 /* g2u: gb18030/gbk/gb2312 => utf-8
- * µ¼ÖÂ½á¹û±ä³¤µÄÊÇ2×Ö½ÚµÄÖÐÎÄ×Ö·û×ª³É3×Ö½ÚµÄutf-8×Ö·û£¬µ«³¤¶È²»»á³¬³öÔ­À´µÄ0.5±¶
- * Òò´Ëg2uÔ¤ÁôµÄÊä³ö³¤¶È=ÊäÈë³¤¶È*1.5+1 (×îºóµÄ1×öÎª'\0'×ö±£»¤)
+ * å¯¼è‡´ç»“æžœå˜é•¿çš„æ˜¯2å­—èŠ‚çš„ä¸­æ–‡å­—ç¬¦è½¬æˆ3å­—èŠ‚çš„utf-8å­—ç¬¦ï¼Œä½†é•¿åº¦ä¸ä¼šè¶…å‡ºåŽŸæ¥çš„0.5å€
+ * å› æ­¤g2ué¢„ç•™çš„è¾“å‡ºé•¿åº¦=è¾“å…¥é•¿åº¦*1.5+1 (æœ€åŽçš„1åšä¸º'\0'åšä¿æŠ¤)
  */
 std::string g2u(const std::string &from)
 {
@@ -47,7 +47,7 @@ std::string g2u(const std::string &from)
     size_t inlen  = from.size();
     size_t outlen = inlen + (inlen>>1) + 1;
     char  *outbuf = new char[outlen]();
-    convert_charset("GB18030", "UTF-8//IGNORE", inbuf, inlen, outbuf, outlen);
+    charset_convert("GB18030", "UTF-8//IGNORE", inbuf, inlen, outbuf, outlen);
     to.assign(outbuf);
     delete[]outbuf;
 
@@ -55,8 +55,8 @@ std::string g2u(const std::string &from)
 }
 
 /* ug2: utf-8 => gb18030/gbk/gb2312
- * µ¼ÖÂ½á¹û±ä³¤µÄÊÇ3×Ö½ÚµÄÖÐÎÄ×Ö·û×ª³É4×Ö½ÚµÄgb18030×Ö·û£¬µ«³¤¶È²»»á³¬³öÔ­À´µÄ0.5±¶
- * Òò´Ëu2gÔ¤ÁôµÄÊä³ö³¤¶È=ÊäÈë³¤¶È*1.5+1 (×îºóµÄ1×öÎª'\0'×ö±£»¤)
+ * å¯¼è‡´ç»“æžœå˜é•¿çš„æ˜¯3å­—èŠ‚çš„ä¸­æ–‡å­—ç¬¦è½¬æˆ4å­—èŠ‚çš„gb18030å­—ç¬¦ï¼Œä½†é•¿åº¦ä¸ä¼šè¶…å‡ºåŽŸæ¥çš„0.5å€
+ * å› æ­¤u2gé¢„ç•™çš„è¾“å‡ºé•¿åº¦=è¾“å…¥é•¿åº¦*1.5+1 (æœ€åŽçš„1åšä¸º'\0'åšä¿æŠ¤)
  */
 std::string u2g(const std::string &from)
 {
@@ -66,7 +66,7 @@ std::string u2g(const std::string &from)
     size_t inlen  = from.size();
     size_t outlen = inlen + (inlen>>1) + 1;
     char  *outbuf = new char[outlen]();
-    convert_charset("UTF-8", "GB18030//IGNORE", inbuf, inlen, outbuf, outlen);
+    charset_convert("UTF-8", "GB18030//IGNORE", inbuf, inlen, outbuf, outlen);
     to.assign(outbuf);
     delete[]outbuf;
 
