@@ -39,38 +39,38 @@ int charset_convert(const char *from, const char *to
  * 导致结果变长的是2字节的中文字符转成3字节的utf-8字符，但长度不会超出原来的0.5倍
  * 因此g2u预留的输出长度=输入长度*1.5+1 (最后的1做为'\0'做保护)
  */
-std::string g2u(const std::string &from)
+std::string charset_g2u(const std::string &gbk)
 {
-    std::string to;
+    std::string utf8;
 
-    char  *inbuf  = const_cast<char*>(from.c_str());
-    size_t inlen  = from.size();
+    char  *inbuf  = const_cast<char*>(gbk.c_str());
+    size_t inlen  = gbk.size();
     size_t outlen = inlen + (inlen>>1) + 1;
     char  *outbuf = new char[outlen]();
     charset_convert("GB18030", "UTF-8//IGNORE", inbuf, inlen, outbuf, outlen);
-    to.assign(outbuf);
+    utf8.assign(outbuf);
     delete[]outbuf;
 
-    return to;
+    return utf8;
 }
 
 /* ug2: utf-8 => gb18030/gbk/gb2312
  * 导致结果变长的是3字节的中文字符转成4字节的gb18030字符，但长度不会超出原来的0.5倍
  * 因此u2g预留的输出长度=输入长度*1.5+1 (最后的1做为'\0'做保护)
  */
-std::string u2g(const std::string &from)
+std::string charset_u2g(const std::string &utf8)
 {
-    std::string to;
+    std::string gbk;
 
-    char  *inbuf  = const_cast<char*>(from.c_str());
-    size_t inlen  = from.size();
+    char  *inbuf  = const_cast<char*>(utf8.c_str());
+    size_t inlen  = utf8.size();
     size_t outlen = inlen + (inlen>>1) + 1;
     char  *outbuf = new char[outlen]();
     charset_convert("UTF-8", "GB18030//IGNORE", inbuf, inlen, outbuf, outlen);
-    to.assign(outbuf);
+    gbk.assign(outbuf);
     delete[]outbuf;
 
-    return to;
+    return gbk;
 }
 
 };
