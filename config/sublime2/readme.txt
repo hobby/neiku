@@ -1,13 +1,15 @@
 
-Ò»¡¢ËµÃ÷
-commands.py ÊÇsublime text 2µÄÖĞsftp²å¼şµÄÆÆ½â°æÎÄ¼ş£¬ÆÆ½âÄÚÈİ£ºµ±Î´×¢²ásftp²å¼şÊ±£¬Ã¿10´ÎÉÏ´«²Ù×÷¶¼»áÓĞÒ»¸öµ¯´°£¬Ó°ÏìÊ¹ÓÃ£¬Õâ¸öÆÆ½â°Ñµ¯´°È¥µôÁË¡£
+# vim:fenc=utf-8:ff=unix:ft=config
 
-¶ş¡¢°²×°·½·¨
-£¨1£©½«commands.pyÎÄ¼ş¸´ÖÆÕ³Ìùµ½£º<ÏµÍ³ËùÔÚ·ÖÇøÅÌ·û£¨ÀıÈçC£©>:\Users\<ÓÃ»§Ãû>\AppData\Roaming\Sublime Text 2\Packages\SFTP\sftp
-£¨2£©ÖØÆôsublime
-£¨3£©ºöÂÔÏàÍ¬Ä¿Â¼ÏÂÃæµÄcommands.pyc
+ä¸€ã€è¯´æ˜
+commands.py æ˜¯sublime text 2çš„ä¸­sftpæ’ä»¶çš„ç ´è§£ç‰ˆæ–‡ä»¶ï¼Œç ´è§£å†…å®¹ï¼šå½“æœªæ³¨å†Œsftpæ’ä»¶æ—¶ï¼Œæ¯10æ¬¡ä¸Šä¼ æ“ä½œéƒ½ä¼šæœ‰ä¸€ä¸ªå¼¹çª—ï¼Œå½±å“ä½¿ç”¨ï¼Œè¿™ä¸ªç ´è§£æŠŠå¼¹çª—å»æ‰äº†ã€‚
 
-Èı¡¢Ïà¹Ø×ÊÁÏ
-£¨1£©¡¶sublime sftp ²å¼ş°²×°¼°ÆÆ½â¡· 
+äºŒã€å®‰è£…æ–¹æ³•
+ï¼ˆ1ï¼‰å°†commands.pyæ–‡ä»¶å¤åˆ¶ç²˜è´´åˆ°ï¼š<ç³»ç»Ÿæ‰€åœ¨åˆ†åŒºç›˜ç¬¦ï¼ˆä¾‹å¦‚Cï¼‰>:\Users\<ç”¨æˆ·å>\AppData\Roaming\Sublime Text 2\Packages\SFTP\sftp
+ï¼ˆ2ï¼‰é‡å¯sublime
+ï¼ˆ3ï¼‰å¿½ç•¥ç›¸åŒç›®å½•ä¸‹é¢çš„commands.pyc
+
+ä¸‰ã€ç›¸å…³èµ„æ–™
+ï¼ˆ1ï¼‰ã€Šsublime sftp æ’ä»¶å®‰è£…åŠç ´è§£ã€‹ 
 http://blog.csdn.net/appletreesujie/article/details/11158057
 http://download.csdn.net/download/appletreesujie/6217277

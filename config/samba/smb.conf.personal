@@ -1,0 +1,37 @@
+
+#  vim:fenc=utf-8:ff=unix:ft=samba:ts=4:sw=4:noet
+
+#
+# file: smb.conf.personal (samba 3.6.23)
+# desc: 简单samba配置，适合多个用户共享一台samba机器的场景(HOME目录各自独立)
+# date: 2015-05-27
+#   by: hobby <ku7d@qq.com>
+# 
+# usage: # ln -sf /path/to/smb.conf.personal /etc/samba/smb.conf 
+#
+
+[global]
+	# 工作组名称与windows侧工作组名称一致
+	workgroup = WORKGROUP
+	# netio-name用于windows侧网络共享的名称展示(需要启动nmb)
+	netbios name = samba
+	server string = Samba Server Version %v
+	# 日志文件(日志文件大小上限单位是KB，默认是5000，这里设置成50即可)
+	log file = /var/log/samba/log.%m
+	max log size = 50
+	# 使用系统已有用户进行校验，samba密码通过smbpasswd添加
+	security = user
+	passdb backend = tdbsam
+	load printers = yes
+	cups options = raw
+	# 支持软链文件(samba 3.x)
+	wide links = yes
+	unix extensions = no
+[homes]
+	comment = Home Directories
+	browseable = no
+	writable = yes
+	# 通过samba创建的文件，默认属性权限为644
+	create mask = 0644
+	# 通过samba创建的文件夹，默认属性权限为755
+	directory mask = 0755
