@@ -10,16 +10,18 @@ VPATH =
 
 OUTPUT = libneiku.so
 
+LIBNEIKU_A_OBJS = charset.o \
+                  jsoncpp.o \
+
 ALL: $(OUTPUT)
 
-libneiku.so: charset.o
+libneiku.so: $(LIBNEIKU_A_OBJS)
 	g++ -fPIC -shared -o $@ $^ $(ALL_LIB)
 	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
 
-libneiku.a: charset.o
+libneiku.a: $(LIBNEIKU_A_OBJS)
 	ar -r $@ $^
 	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
 
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so
-
