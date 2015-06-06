@@ -10,5 +10,7 @@ git config --global alias.ci commit
 git config --global alias.st status
 git config --global alias.co checkout
 
+# 解决中文名称显示成"\xxx\xxx\xxx"的问题
+git config --global core.quotepath false
 
 
