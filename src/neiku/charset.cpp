@@ -1,11 +1,13 @@
 
+#include <errno.h>
 #include <iconv.h>
+#include <cstring>
 #include <string>
 
 #include <neiku/charset.h>
 
 /*
- * 
+ * ------- 字符集编码速查 -------
  * gbk2312: 英文占1个字节，中文占2个字节
  * gbk: 英文占1个字节，中文占2个字节
  * gb18030: 英文点1个字节，中文占2个(gb2312/gbk)或者4个字节(cjk-a/b)
@@ -19,18 +21,36 @@ namespace neiku
 {
 
 /*
- * charset_convert: iconv_open/iconv/iconv_close的简单封装
+ * charset_convert: 字符集编码转换(迭代算法)
  */
-int charset_convert(const char *from, const char *to
-                    , char *inbuf, size_t inlen
-                    , char *outbuf, size_t outlen)
+int charset_convert(const char* charset_from, const char* charset_to
+                    , const std::string& string_from, std::string& string_to)
 {
-    iconv_t cd = iconv_open(to, from);
-    if (cd)
+    string_to = "";
+    iconv_t cd = iconv_open(charset_to, charset_from);
+    if(cd)
     {
-        iconv(cd, &inbuf, &inlen, &outbuf, &outlen);
+        int ret = 0;
+        char buffer[1024] = {0};
+        char *inbuf= const_cast<char*>(string_from.c_str()), *outbuf = buffer;
+        size_t inbytes = string_from.size(), outbytes =(sizeof(buffer) - 1);
+        while (inbytes > 0)
+        {
+            ret = iconv(cd, &inbuf, &inbytes, &outbuf, &outbytes);
+            if(ret == 0 || errno == E2BIG)
+            {
+                string_to.append(buffer);
+                memset(buffer, 0, sizeof(buffer));
+                outbuf = buffer;
+                outbytes = sizeof(buffer) - 1;
+            }
+            else
+            {
+                break;
+            }
+        }
         iconv_close(cd);
-        return 0;
+        return ret;
     }
     return -1;
 }
@@ -42,15 +62,7 @@ int charset_convert(const char *from, const char *to
 std::string charset_g2u(const std::string &gbk)
 {
     std::string utf8;
-
-    char  *inbuf  = const_cast<char*>(gbk.c_str());
-    size_t inlen  = gbk.size();
-    size_t outlen = inlen + (inlen>>1) + 1;
-    char  *outbuf = new char[outlen]();
-    charset_convert("GB18030", "UTF-8//IGNORE", inbuf, inlen, outbuf, outlen);
-    utf8.assign(outbuf);
-    delete[]outbuf;
-
+    charset_convert("GB18030", "UTF-8//IGNORE", gbk, utf8);
     return utf8;
 }
 
@@ -61,15 +73,7 @@ std::string charset_g2u(const std::string &gbk)
 std::string charset_u2g(const std::string &utf8)
 {
     std::string gbk;
-
-    char  *inbuf  = const_cast<char*>(utf8.c_str());
-    size_t inlen  = utf8.size();
-    size_t outlen = inlen + (inlen>>1) + 1;
-    char  *outbuf = new char[outlen]();
-    charset_convert("UTF-8", "GB18030//IGNORE", inbuf, inlen, outbuf, outlen);
-    gbk.assign(outbuf);
-    delete[]outbuf;
-
+    charset_convert("UTF-8", "GB18030//IGNORE", utf8, gbk);
     return gbk;
 }
 

@@ -37,10 +37,9 @@ std::string charset_u2g(const std::string &utf8);
 // TODO: 字符串字符集编码探测(枚举算法)
 const char* charset_detect(const char *string);
 
-// 封装iconv.h中的iconv_open/iconv/iconv_close
-int charset_convert(const char *from, const char *to
-                    , char *inbuf, size_t inlen
-                    , char *outbuf, size_t outlen);
+// 任意字符集编码转换(迭代算法)
+int charset_convert(const char* charset_from, const char* charset_to
+                    , const std::string& string_from, std::string& string_to);
 };
 
 #endif
