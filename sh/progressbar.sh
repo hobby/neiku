@@ -58,7 +58,7 @@ function progressbar_show() # curr total retcode
     local ps2=$(($1*100%$2/100));
 
     # 预估剩余时间
-    local te=$((ms*(100-ps1)));
+    local te=$((ms*($2-$1)));
 
     # 累计错误数量
     if [ $3 != 0 ] ; then let pb_err=pb_err+1; fi;
