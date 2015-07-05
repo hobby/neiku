@@ -26,7 +26,7 @@ function progressbar_init() # name
     pb_end=0;
     pb_err=0;
     pb_name="$1"
-    if [ -z "$pg_name" ] ; then
+    if [ -z "$pb_name" ] ; then
         pb_name="progress bar";
     fi;
 }
