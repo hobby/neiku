@@ -24,7 +24,6 @@ alias ll='ls -l --color'
 alias la='ls -la --color'
 alias mk='make'
 alias mkc='make clean'
-alias mkd='make deploy'
 alias grep='grep --color'
 alias tree='tree -C'
 alias kall='killall'
@@ -34,7 +33,6 @@ alias ps?='ps -elf | grep --color'
 alias CD='cd'
 alias MK='make'
 alias MKC='make clean'
-alias MKD='make deploy'
 
 # PS1 => user_name@ssh_ip:pwd:[#$] 
 ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
@@ -49,3 +47,18 @@ fi
 # utf-8 to gbk, gbk to utf-8
 alias u2g='iconv -f utf-8 -t gb18030//ignore'
 alias g2u='iconv -f gbk -t utf-8//ignore'
+
+# mkd [targets]
+# usage: mkd       ==> make deploy
+#        mkd a b c ==> make deploy OUTPUT="a b c"
+# TODO: make -f xxx [targets]
+function mkd()
+{
+    if [ $# -gt 0 ] ; then
+        make deploy OUTPUT="$*"
+    else
+        make deploy
+    fi
+}
+alias MKD='mkd'
+
