@@ -10,8 +10,18 @@
 # Example:
 # $ source progressbar.sh
 # $ progressbar_init bar_name;
-# $ max=100; i=0; while((i++<max)); do usleep 80000 && progressbar_clean && echo you options log$i; progressbar_show $i $max $?; done; progressbar_close;
-# 
+# $ max=100; i=0;
+# $ while ((i++<max))
+# $ do 
+# $     usleep 80000;
+# $     
+# $     progressbar_clean;
+# $     echo you options log$i after clean;
+# $     
+# $     progressbar_show $i $max $?;
+# $ done;
+# $ progressbar_close;
+# $
 # vim:ts=4;sw=4;expandtab
 #
 
@@ -52,6 +62,7 @@ function progressbar_show() # curr total retcode
     pb_end=$(echo `date +%s`*1000000000+`date +%N` | bc);
     local ms=$(((pb_end-pb_beg)/1000000));
     local us=$(((pb_end-pb_beg)%1000000));
+    pb_beg=$pb_end;
 
     # 计算进度完成百分比
     local ps1=$(($1*100/$2));
@@ -67,5 +78,4 @@ function progressbar_show() # curr total retcode
     echo -n "$pb_name: progress: $ps1.$ps2% ($1/$2), time-remaining: ${te}ms, errors: ${pb_err}";
 
     tput rc;
-    pb_beg=$pb_end;
 }
