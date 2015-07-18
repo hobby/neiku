@@ -4,7 +4,9 @@
  * desc:   log tools for C++
  * author: hobby
  * date:   2015/07/18 23:03:00
- *
+ * version: 
+ *         v1: 最简单莫过于只支持输出日志到终端
+ *         v2: 其实，每条日志就是一行信息，便于分析
  * usage:
  *       #include <neiku/log.h>
  *
@@ -33,7 +35,7 @@ class CLog
 
         int DoLog(const char* szLog)
         {
-            printf("%s", szLog);
+            printf("%s\n", szLog);
             return 0;
         };
 };
