@@ -13,6 +13,12 @@
  *             http://www.cplusplus.com/reference/cstdarg/
  *             http://www.cplusplus.com/reference/cstdio/vprintf/
  *             https://gcc.gnu.org/onlinedocs/cpp/Variadic-Macros.html
+ *         v4: 进程id/文件名&号行/函数名是日志的现场信息，很有用
+ *             注意，__FILE__还包含路径信息
+ *             https://gcc.gnu.org/onlinedocs/cpp/Standard-Predefined-Macros.html
+ *             FIXME: 不能强制使用者对于basename版本的选择，所以还是收敛下吧
+ *                    posix版basename遇到/结层的路径时(如/usr/)，会挂掉，so还是用gnu的吧
+ *                    (当然，gnu版basename遇到NULL时也会挂掉)
  * usage:
  *       #include <neiku/log.h>
  *
@@ -24,12 +30,19 @@
 #ifndef __NK_LOG_H__
 #define __NK_LOG_H__ 1
 
+#include <unistd.h>
+#include <cstring>
 #include <cstdarg>
 #include <cstdio>
 
 #include <neiku/singleton.h>
 #define LOGER SINGLETON(neiku::CLog)
-#define LOG(format, args...)   LOGER->DoLog(format"\n", ##args)
+#define LOG(format, args...) \
+        LOGER->DoLog("[pid:%d][%s:%d][%s]" \
+                     format \
+                     "\n" \
+                     , getpid(), basename(__FILE__), __LINE__, __FUNCTION__ \
+                     , ##args)
 
 namespace neiku
 {
