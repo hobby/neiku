@@ -19,6 +19,8 @@
  *             FIXME: 不能强制使用者对于basename版本的选择，所以还是收敛下吧
  *                    posix版basename遇到/结层的路径时(如/usr/)，会挂掉，so还是用gnu的吧
  *                    (当然，gnu版basename遇到NULL时也会挂掉)
+ *         v5: 收敛basename（简单实现），去掉gnu/posix版basename的依赖
+ *             注意，__FILE__中的文件名部分总是非空的
  * usage:
  *       #include <neiku/log.h>
  *
@@ -35,13 +37,18 @@
 #include <cstdarg>
 #include <cstdio>
 
-#include <neiku/singleton.h>
+#ifndef __NK_BASENAME
+#define __NK_BASENAME(filepath) \
+        (strrchr(filepath, '/') ? (strrchr(filepath, '/') + 1) : filepath)
+#endif
+
+#include <neiku/singleton.h> 
 #define LOGER SINGLETON(neiku::CLog)
 #define LOG(format, args...) \
         LOGER->DoLog("[pid:%d][%s:%d][%s]" \
                      format \
                      "\n" \
-                     , getpid(), basename(__FILE__), __LINE__, __FUNCTION__ \
+                     , getpid(), __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                      , ##args)
 
 namespace neiku

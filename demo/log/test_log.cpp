@@ -1,13 +1,5 @@
 
-#include <unistd.h>
-#include <stdint.h>
-#include <cstdio>
-#include <string>
-#include <cstring>
-
 #include <neiku/log.h>
-
-using namespace std;
 
 void testv4()
 {
@@ -28,9 +20,6 @@ int main(int argc, char* argv[])
 
     testv4();
 
-    const char* prtnull = NULL;
-    LOG("basename('/usr/'):[%s], basename(NULL):[%s]"
-        , basename("/usr/")
-        , basename(""));
+    LOG("v5: no more gnu/posix basename");
     return 0;
 }
