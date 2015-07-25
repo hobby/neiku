@@ -28,29 +28,29 @@
 namespace neiku
 {
 
-/* ÀÁººµ¥ÀıÄ£Ê½
- * ÊµÏÖ£ºÊ±¼ä»»È¡¿Õ¼ä£¬Ïß³Ì°²È«(¹²Ïí)£¬Ê×´ÎÕæÕı·ÃÎÊÊ±²ÅÊµÀı»¯£¬³ÌĞòÍË³öºó×Ô¶¯ÊÍ·Å£¡
- * ±³¾°£º1) Order of initialization (and destruction) problem. (È«¾Ö¾²Ì¬±äÁ¿)
- *       2) Construct on frist use. (ĞèÒªÊ±²ÅÊµÀı»¯)
- *       3) ¶öººµ¥Àı¾ÍÏñÈ«¾Ö±äÁ¿Ò»Ñù£¬²»ÍÆ¼öÊ¹ÓÃ
- *       4) Ë«ÖØ¼ì²â£¬¼õÉÙ×ÊÔ´µÄÎŞĞ§ÇÀÕ¼£¬Ìá¸ßĞ§ÂÊ
- *       5) ¾Ö²¿¾²Ì¬±äÁ¿µÄÏß³Ì°²È«ÎÊÌâ
- * ÒıÓÃ£ºhttp://stackoverflow.com/questions/1463707/c-singleton-vs-global-static-object
+/* æ‡’æ±‰å•ä¾‹æ¨¡å¼
+ * å®ç°ï¼šæ—¶é—´æ¢å–ç©ºé—´ï¼Œçº¿ç¨‹å®‰å…¨(å…±äº«)ï¼Œé¦–æ¬¡çœŸæ­£è®¿é—®æ—¶æ‰å®ä¾‹åŒ–ï¼Œç¨‹åºé€€å‡ºåè‡ªåŠ¨é‡Šæ”¾ï¼
+ * èƒŒæ™¯ï¼š1) Order of initialization (and destruction) problem. (å…¨å±€é™æ€å˜é‡)
+ *       2) Construct on frist use. (éœ€è¦æ—¶æ‰å®ä¾‹åŒ–)
+ *       3) é¥¿æ±‰å•ä¾‹å°±åƒå…¨å±€å˜é‡ä¸€æ ·ï¼Œä¸æ¨èä½¿ç”¨
+ *       4) åŒé‡æ£€æµ‹ï¼Œå‡å°‘èµ„æºçš„æ— æ•ˆæŠ¢å ï¼Œæé«˜æ•ˆç‡
+ *       5) å±€éƒ¨é™æ€å˜é‡çš„çº¿ç¨‹å®‰å…¨é—®é¢˜
+ * å¼•ç”¨ï¼šhttp://stackoverflow.com/questions/1463707/c-singleton-vs-global-static-object
  */
 template <typename T>
 class CLazySingleton
 {
     public:
-        // ·µ»Ø¶ÔÏóÖ¸Õë¿É·½±ãÊµÏÖË«ÖØ¼ì²â
+        // è¿”å›å¯¹è±¡æŒ‡é’ˆå¯æ–¹ä¾¿å®ç°åŒé‡æ£€æµ‹
         static T* Instance()
         {
             if (!m_pInstance)
             {
-                // ·ÀÖ¹ÓÅ»¯
+                // é˜²æ­¢ä¼˜åŒ–
                 ++m_pInstance;
                 --m_pInstance;
                 
-                // ÔÚC++0XÇ°£¬¾Ö²¿¾²Ì¬±ä¸ü³õÊ¼»¯²»ÊÇÔ­×Ó²Ù×÷
+                // åœ¨C++0Xå‰ï¼Œå±€éƒ¨é™æ€å˜æ›´åˆå§‹åŒ–ä¸æ˜¯åŸå­æ“ä½œ
                 pthread_mutex_lock(&m_mutex);
                 if (!m_pInstance)
                 {
@@ -83,10 +83,10 @@ pthread_mutex_t CLazySingleton<T>::m_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 
-/* Ïß³ÌÌØÓĞÊı¾İ(Ïß³Ì¾Ö²¿´æ´¢)µ¥ÀıÄ£Ê½
- * ÊµÏÖ£ºÏß³Ì¼¶µ¥Àı£¬µ¥ÀıÔÚÏß³Ì¼ä¸÷ÓĞÒ»·İ£¡
+/* çº¿ç¨‹ç‰¹æœ‰æ•°æ®(çº¿ç¨‹å±€éƒ¨å­˜å‚¨)å•ä¾‹æ¨¡å¼
+ * å®ç°ï¼šçº¿ç¨‹çº§å•ä¾‹ï¼Œå•ä¾‹åœ¨çº¿ç¨‹é—´å„æœ‰ä¸€ä»½ï¼
  *
- * ÒıÓÃ£ºhttp://blog.csdn.net/cywosp/article/details/26469435
+ * å¼•ç”¨ï¼šhttp://blog.csdn.net/cywosp/article/details/26469435
  *       http://blog.csdn.net/liuxuejiang158blog/article/details/14101645
  *
  */
@@ -121,14 +121,14 @@ class CTSDSingleton
     private:
         static void CreateKey()
         {
-            // ×¢²áÖ÷Ïß³ÌÖÕÖ¹ÊÂ¼ş
+            // æ³¨å†Œä¸»çº¿ç¨‹ç»ˆæ­¢äº‹ä»¶
             atexit(KillMainThreadSingleton);
             
-            // ´´½¨TSD£¬²¢×¢²á×ÓÏß³ÌÖÕÊÂ¼ş
+            // åˆ›å»ºTSDï¼Œå¹¶æ³¨å†Œå­çº¿ç¨‹ç»ˆäº‹ä»¶
             pthread_key_create(&m_thread_key, KillSubThreadSingleton);
         };
         
-        // Ö÷Ïß³ÌÖÕÖ¹£¬ÊÍ·Å×ÊÔ´
+        // ä¸»çº¿ç¨‹ç»ˆæ­¢ï¼Œé‡Šæ”¾èµ„æº
         static void KillMainThreadSingleton()
         {
             T* pInstance = (T*)pthread_getspecific(m_thread_key);
@@ -138,7 +138,7 @@ class CTSDSingleton
             }
         };
                 
-        // ×ÓÏß³ÌÖÕÖ¹£¬ÊÍ·Å×ÊÔ´
+        // å­çº¿ç¨‹ç»ˆæ­¢ï¼Œé‡Šæ”¾èµ„æº
         static void KillSubThreadSingleton(void* pInstance)
         {
             if (pInstance != NULL)
