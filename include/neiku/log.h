@@ -21,6 +21,10 @@
  *                    (当然，gnu版basename遇到NULL时也会挂掉)
  *         v5: 收敛basename（简单实现），去掉gnu/posix版basename的依赖
  *             注意，__FILE__中的文件名部分总是非空的
+ *         v6: 日志打印时间也是重要的现场信息
+ *             gettimeofday可以获取精确到微秒的时候，localtime_r是线程安全的
+ *             strftime可以得到精确到秒的日期时间串，结合snprintf可以得到精确到微秒，方便
+ *             分析日志
  * usage:
  *       #include <neiku/log.h>
  *
@@ -33,6 +37,8 @@
 #define __NK_LOG_H__ 1
 
 #include <unistd.h>
+#include <sys/time.h>
+#include <ctime>
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
@@ -45,10 +51,11 @@
 #include <neiku/singleton.h> 
 #define LOGER SINGLETON(neiku::CLog)
 #define LOG(format, args...) \
-        LOGER->DoLog("[pid:%d][%s:%d][%s]" \
+        LOGER->DoLog("[%s][pid:%d][%s:%d][%s] " \
                      format \
                      "\n" \
-                     , getpid(), __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                     , LOGER->GetTime(), getpid() \
+                     , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                      , ##args)
 
 namespace neiku
@@ -68,6 +75,24 @@ class CLog
             va_end(vArgs);
             return 0;
         };
+
+        // 获取当前时间串，格式 => yyyy-mm-dd hh:mm:ss.us
+        const char* GetTime()
+        {
+            // 时间精确到微秒
+            struct timeval stTv;
+            gettimeofday(&stTv, NULL);
+            // 线程安全为重
+            struct tm stTm;
+            localtime_r(&stTv.tv_sec, &stTm);
+            // 不会返回脏数据
+            size_t iLen = strftime(m_szTime, sizeof(m_szTime), "%F %T", &stTm);
+            snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen, ".%ld", stTv.tv_usec);
+            return m_szTime;
+        };
+
+    private:
+        char m_szTime[32];
 };
 
 };
