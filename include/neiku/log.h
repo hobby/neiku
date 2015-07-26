@@ -22,9 +22,11 @@
  *         v5: 收敛basename（简单实现），去掉gnu/posix版basename的依赖
  *             注意，__FILE__中的文件名部分总是非空的
  *         v6: 日志打印时间也是重要的现场信息
- *             gettimeofday可以获取精确到微秒的时候，localtime_r是线程安全的
+ *             gettimeofday可以获取精确到微秒的时间，localtime_r是线程安全的
  *             strftime可以得到精确到秒的日期时间串，结合snprintf可以得到精确到微秒，方便
  *             分析日志
+ *         v7: 引入日志优先级，ERR级是最重要最需要关注的，MSG级属于正常流水（默认）
+ *             DBG级常用于调试
  * usage:
  *       #include <neiku/log.h>
  *
@@ -49,14 +51,28 @@
 #endif
 
 #include <neiku/singleton.h> 
-#define LOGER SINGLETON(neiku::CLog)
-#define LOG(format, args...) \
-        LOGER->DoLog("[%s][pid:%d][%s:%d][%s] " \
-                     format \
-                     "\n" \
-                     , LOGER->GetTime(), getpid() \
-                     , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
-                     , ##args)
+#define LOG SINGLETON(neiku::CLog)
+#define LOG_ERR(format, args...) \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s] ERR: " \
+                   format \
+                   "\n" \
+                   , LOG->GetTime(), getpid() \
+                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , ##args);
+#define LOG_MSG(format, args...) \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s] MSG: " \
+                   format \
+                   "\n" \
+                   , LOG->GetTime(), getpid() \
+                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , ##args);
+#define LOG_DBG(format, args...) \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s] DBG: " \
+                   format \
+                   "\n" \
+                   , LOG->GetTime(), getpid() \
+                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , ##args);
 
 namespace neiku
 {
@@ -64,11 +80,49 @@ namespace neiku
 class CLog
 {
     public:
-        CLog()
+        enum _LOG_LEVEL_ENUM
+        {
+            LOG_LEVEL_NONE = 0,
+            LOG_LEVEL_ERR  = 1,
+            LOG_LEVEL_MSG  = 2,
+            LOG_LEVEL_DBG  = 3,
+        };
+
+    public:
+        CLog(): m_iLogLevel(LOG_LEVEL_MSG)
         {};
 
-        int DoLog(const char* szFormat, ...)
+        int SetLogLevel(int iLogLevel)
         {
+            int iPreLogLevel = m_iLogLevel;
+            m_iLogLevel = iLogLevel;
+            return iPreLogLevel;
+        };
+        int GetLogLevel()
+        {
+            return m_iLogLevel;
+        };
+        int GetLogLevelErr()
+        {
+            return LOG_LEVEL_ERR;
+        };
+        int GetLogLevelMsg()
+        {
+            return LOG_LEVEL_MSG;
+        };
+        int GetLogLevelDbg()
+        {
+            return LOG_LEVEL_DBG;
+        };
+
+        int DoLog(int iLogLevel, const char* szFormat, ...)
+        {
+            // 当前配置的日志优先级过低，不输出日志
+            if (m_iLogLevel < iLogLevel)
+            {
+                return 0;
+            }
+
             va_list vArgs;
             va_start(vArgs, szFormat);
             vprintf(szFormat, vArgs);
@@ -93,6 +147,7 @@ class CLog
 
     private:
         char m_szTime[32];
+        int  m_iLogLevel;
 };
 
 };

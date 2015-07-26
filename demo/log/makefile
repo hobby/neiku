@@ -4,7 +4,7 @@ include ../../makefile.neiku
 
 DIY_INC = -I../../include/ \
 
-DIY_LIB = -lneiku
+DIY_LIB =
 
 VPATH = 
 
