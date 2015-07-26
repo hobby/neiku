@@ -49,5 +49,15 @@ int main(int argc, char* argv[])
     LOG_ERR("v7: this is err level");
     LOG_MSG("v7: this is msg level");
     LOG_DBG("v7: this is dbg level");
+
+    LOG->SetLog2Stdout(false);
+    LOG_MSG("v8: now no log to stdout");
+    LOG->SetLog2Stdout(true);
+    LOG_MSG("v8: now log to stdout");
+
+    LOG->SetLogFile("./test_log.log");
+    LOG_MSG("v8: after set logfile, now just log to stdout");
+    LOG->SetLog2Stdout(true);
+    LOG_MSG("v8: setlog2stdout true, now log to stdout")
     return 0;
 }

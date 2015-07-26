@@ -27,10 +27,11 @@
  *             分析日志
  *         v7: 引入日志优先级，ERR级是最重要最需要关注的，MSG级属于正常流水（默认）
  *             DBG级常用于调试
+ *         v8: 支持输出日志到文件，默认只输出到标准输出设备
  * usage:
  *       #include <neiku/log.h>
  *
- * compile: -lneiku
+ * compile:
  *
  * vim:ts=4;sw=4;expandtab
  */
@@ -44,6 +45,7 @@
 #include <cstring>
 #include <cstdarg>
 #include <cstdio>
+#include <string>
 
 #ifndef __NK_BASENAME
 #define __NK_BASENAME(filepath) \
@@ -90,8 +92,34 @@ class CLog
 
     public:
         CLog(): m_iLogLevel(LOG_LEVEL_MSG)
+              , m_bLog2Stdout(true)
+              , m_bLog2File(false)
         {};
 
+        // 设置/获取日志文件路径
+        std::string SetLogFile(std::string sLogFilePath)
+        {
+            SetLog2Stdout(false);
+            SetLog2File(true);
+
+            std::string sPreLogFilePath = m_sLogFilePath;
+            m_sLogFilePath = sLogFilePath;
+            return sPreLogFilePath;
+        };
+        std::string GetLogFile()
+        {
+            return m_sLogFilePath;
+        };
+
+        // 输出日志到文件开关
+        bool SetLog2File(bool bLog2File)
+        {
+            bool bPreLog2File = m_bLog2File;
+            m_bLog2File = bLog2File;
+            return bPreLog2File;
+        };
+
+        // 设置/获取日志优先级
         int SetLogLevel(int iLogLevel)
         {
             int iPreLogLevel = m_iLogLevel;
@@ -115,6 +143,15 @@ class CLog
             return LOG_LEVEL_DBG;
         };
 
+        // 输出日志到标准输出设备开关
+        bool SetLog2Stdout(bool bLog2Stdout)
+        {
+            bool bPreLog2Stdout = m_bLog2Stdout;
+            m_bLog2Stdout = bLog2Stdout;
+            return bPreLog2Stdout;
+        };
+
+        // 根据日志优先级输出格式化日志
         int DoLog(int iLogLevel, const char* szFormat, ...)
         {
             // 当前配置的日志优先级过低，不输出日志
@@ -123,10 +160,29 @@ class CLog
                 return 0;
             }
 
-            va_list vArgs;
-            va_start(vArgs, szFormat);
-            vprintf(szFormat, vArgs);
-            va_end(vArgs);
+            // 输出日志到标准输出设备
+            if (m_bLog2Stdout == true)
+            {
+                va_list vArgs;
+                va_start(vArgs, szFormat);
+                vprintf(szFormat, vArgs);
+                va_end(vArgs);
+            }
+
+            // 输出日志到文件
+            if (m_bLog2File == true)
+            {
+                FILE* pFile = fopen(m_sLogFilePath.c_str(), "a");
+                if (pFile != NULL)
+                {
+                    va_list vArgs;
+                    va_start(vArgs, szFormat);
+                    vfprintf(pFile, szFormat, vArgs);
+                    va_end(vArgs);
+                    fclose(pFile);
+                }
+            }
+
             return 0;
         };
 
@@ -140,14 +196,19 @@ class CLog
             struct tm stTm;
             localtime_r(&stTv.tv_sec, &stTm);
             // 不会返回脏数据
-            size_t iLen = strftime(m_szTime, sizeof(m_szTime), "%F %T", &stTm);
-            snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen, ".%ld", stTv.tv_usec);
+            size_t iLen = strftime(m_szTime, sizeof(m_szTime)
+                                   , "%F %T", &stTm);
+            snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
+                     , ".%ld", stTv.tv_usec);
             return m_szTime;
         };
 
     private:
         char m_szTime[32];
         int  m_iLogLevel;
+        bool m_bLog2Stdout;
+        bool m_bLog2File;
+        std::string m_sLogFilePath;
 };
 
 };
