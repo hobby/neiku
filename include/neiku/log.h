@@ -28,6 +28,7 @@
  *         v7: 引入日志优先级，ERR级是最重要最需要关注的，MSG级属于正常流水（默认）
  *             DBG级常用于调试
  *         v8: 支持输出日志到文件，默认只输出到标准输出设备
+ *         v9: 其实用户可以选择自己的单例组件，实现自己的类LOG/LOG_*宏
  * usage:
  *       #include <neiku/log.h>
  *
@@ -52,6 +53,8 @@
         (strrchr(filepath, '/') ? (strrchr(filepath, '/') + 1) : filepath)
 #endif
 
+// 默认情况下，提供neiku版日志单例
+#ifndef __NO_NEIKU_SINGLETON_LOG__
 #include <neiku/singleton.h> 
 #define LOG SINGLETON(neiku::CLog)
 #define LOG_ERR(format, args...) \
@@ -75,6 +78,7 @@
                    , LOG->GetTime(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
+#endif
 
 namespace neiku
 {
