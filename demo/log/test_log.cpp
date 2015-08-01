@@ -15,5 +15,12 @@ void test_func()
 int main(int argc, char* argv[])
 {
     test_func();
+
+    const char* logfile = "/tmp/logs/log/test_log.log";
+    LOG->SetLogFile(logfile);
+    LOG->SetLog2Stdout(true);
+    LOG_MSG("set log file, auto create dir, path:[%s]"
+            , logfile);
+
     return 0;
 }

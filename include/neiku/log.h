@@ -29,6 +29,7 @@
  *             DBG级常用于调试
  *         v8: 支持输出日志到文件，默认只输出到标准输出设备
  *         v9: 其实用户可以选择自己的单例组件，实现自己的类LOG/LOG_*宏
+ *        v10: 支持自动创建日志文件路径中缺少的子目录(类似mkdir -p)
  * usage:
  *       #include <neiku/log.h>
  *
@@ -42,6 +43,8 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/stat.h>
+#include <cerrno>
 #include <ctime>
 #include <cstring>
 #include <cstdarg>
@@ -101,10 +104,11 @@ class CLog
         {};
 
         // 设置/获取日志文件路径
-        std::string SetLogFile(std::string sLogFilePath)
+        std::string SetLogFile(const std::string& sLogFilePath)
         {
             SetLog2Stdout(false);
             SetLog2File(true);
+            MakeDir(sLogFilePath.c_str());
 
             std::string sPreLogFilePath = m_sLogFilePath;
             m_sLogFilePath = sLogFilePath;
@@ -205,6 +209,33 @@ class CLog
             snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
                      , ".%ld", stTv.tv_usec);
             return m_szTime;
+        };
+
+        // 创建文件名中的目录(效果类似mkdir -p)
+        int MakeDir(const char* szPath)
+        {
+            if (szPath == NULL)
+            {
+                return -1;
+            }
+
+            std::string sPath = szPath;
+            size_t iLen = sPath.size();
+            for (size_t i = 1; i < iLen; ++i)
+            {
+                if (sPath[i] == '/')
+                {
+                    sPath[i] = '\0';
+                    int iRet = mkdir(sPath.c_str(), 0777);
+                    if (iRet != 0 && errno != EEXIST)
+                    {
+                        return -1;
+                    }
+                    sPath[i] = '/';
+                }
+            }
+
+            return 0;
         };
 
     private:
