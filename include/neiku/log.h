@@ -51,34 +51,36 @@
 #include <cstdio>
 #include <string>
 
+// 默认情况下，提供neiku版日志单例
+#ifndef __NO_NEIKU_SINGLETON_LOG__
+#include <neiku/singleton.h> 
+
+#define LOG SINGLETON(neiku::CLog)
+
 #ifndef __NK_BASENAME
 #define __NK_BASENAME(filepath) \
         (strrchr(filepath, '/') ? (strrchr(filepath, '/') + 1) : filepath)
 #endif
 
-// 默认情况下，提供neiku版日志单例
-#ifndef __NO_NEIKU_SINGLETON_LOG__
-#include <neiku/singleton.h> 
-#define LOG SINGLETON(neiku::CLog)
 #define LOG_ERR(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s] ERR: " \
                    format \
                    "\n" \
-                   , LOG->GetTime(), getpid() \
+                   , LOG->GetTimeStr(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_MSG(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s] MSG: " \
                    format \
                    "\n" \
-                   , LOG->GetTime(), getpid() \
+                   , LOG->GetTimeStr(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_DBG(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s] DBG: " \
                    format \
                    "\n" \
-                   , LOG->GetTime(), getpid() \
+                   , LOG->GetTimeStr(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #endif
@@ -104,15 +106,12 @@ class CLog
         {};
 
         // 设置/获取日志文件路径
-        std::string SetLogFile(const std::string& sLogFilePath)
+        void SetLogFile(const std::string& sLogFilePath)
         {
+            m_sLogFilePath = sLogFilePath;
             SetLog2Stdout(false);
             SetLog2File(true);
-            MakeDir(sLogFilePath.c_str());
-
-            std::string sPreLogFilePath = m_sLogFilePath;
-            m_sLogFilePath = sLogFilePath;
-            return sPreLogFilePath;
+            MakeSubDir(m_sLogFilePath.c_str());
         };
         std::string GetLogFile()
         {
@@ -120,19 +119,15 @@ class CLog
         };
 
         // 输出日志到文件开关
-        bool SetLog2File(bool bLog2File)
+        void SetLog2File(bool bLog2File)
         {
-            bool bPreLog2File = m_bLog2File;
             m_bLog2File = bLog2File;
-            return bPreLog2File;
         };
 
         // 设置/获取日志优先级
-        int SetLogLevel(int iLogLevel)
+        void SetLogLevel(int iLogLevel)
         {
-            int iPreLogLevel = m_iLogLevel;
             m_iLogLevel = iLogLevel;
-            return iPreLogLevel;
         };
         int GetLogLevel()
         {
@@ -154,9 +149,7 @@ class CLog
         // 输出日志到标准输出设备开关
         bool SetLog2Stdout(bool bLog2Stdout)
         {
-            bool bPreLog2Stdout = m_bLog2Stdout;
             m_bLog2Stdout = bLog2Stdout;
-            return bPreLog2Stdout;
         };
 
         // 根据日志优先级输出格式化日志
@@ -195,7 +188,7 @@ class CLog
         };
 
         // 获取当前时间串，格式 => yyyy-mm-dd hh:mm:ss.us
-        const char* GetTime()
+        const char* GetTimeStr()
         {
             // 时间精确到微秒
             struct timeval stTv;
@@ -211,8 +204,8 @@ class CLog
             return m_szTime;
         };
 
-        // 创建文件名中的目录(效果类似mkdir -p)
-        int MakeDir(const char* szPath)
+        // 创建文件路径中的子目录(效果类似mkdir -p)
+        int MakeSubDir(const char* szPath)
         {
             if (szPath == NULL)
             {
