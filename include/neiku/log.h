@@ -139,7 +139,7 @@ class CLog
         };
 
         // 输出日志到标准输出设备开关
-        bool SetLog2Stdout(bool bLog2Stdout)
+        void SetLog2Stdout(bool bLog2Stdout)
         {
             m_bLog2Stdout = bLog2Stdout;
         };

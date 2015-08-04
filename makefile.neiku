@@ -83,6 +83,10 @@ MACHINEFLAG=-m32
 COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib
 endif
 
+# 编译选项
+CFLAG=-Wall
+CPPFLAG=-Wall
+
 COMM_LIB=-L$(COMM_LIB_PATH)
 COMM_INC=-I$(NEIKU_PROJ_PATH)/include
 
@@ -99,11 +103,11 @@ ALL_LIB=$(COMM_LIB) $(DIY_LIB)
 #g++ -fPIC $(MACHINEFLAG) -shared -o lib$@ $^ $(ALL_LIB)
 
 .c.o:
-	gcc -g -fPIC -c $^ $(ALL_INC)
+	gcc -g -fPIC $(CFLAG) -c $^ $(ALL_INC)
 #gcc -g -fPIC -m$(MACHINE) -c $^ $(ALL_INC)
 
 .cpp.o:
-	g++ -g -fPIC -c $^ $(ALL_INC)
+	g++ -g -fPIC $(CPPFLAG) -c $^ $(ALL_INC)
 
 .o:
 	g++ -g -o $@ $^ $(ALL_LIB)
