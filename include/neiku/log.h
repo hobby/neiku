@@ -113,10 +113,6 @@ class CLog
             SetLog2File(true);
             MakeSubDir(m_sLogFilePath.c_str());
         };
-        std::string GetLogFile()
-        {
-            return m_sLogFilePath;
-        };
 
         // 输出日志到文件开关
         void SetLog2File(bool bLog2File)
@@ -128,10 +124,6 @@ class CLog
         void SetLogLevel(int iLogLevel)
         {
             m_iLogLevel = iLogLevel;
-        };
-        int GetLogLevel()
-        {
-            return m_iLogLevel;
         };
         int GetLogLevelErr()
         {
