@@ -30,6 +30,8 @@
  *         v8: 支持输出日志到文件，默认只输出到标准输出设备
  *         v9: 其实用户可以选择自己的单例组件，实现自己的类LOG/LOG_*宏
  *        v10: 支持自动创建日志文件路径中缺少的子目录(类似mkdir -p)
+ *        v11: 优先级做为日志元信息，不混合在日志中，方便日志分析
+ *             日志输出设备包含标准输出设备、文件，只输出就行了，不用返回什么
  * usage:
  *       #include <neiku/log.h>
  *
@@ -63,21 +65,21 @@
 #endif
 
 #define LOG_ERR(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s] ERR: " \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s][ERR]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_MSG(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s] MSG: " \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s][MSG]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
                    , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_DBG(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s] DBG: " \
+        LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s][DBG]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
@@ -145,12 +147,12 @@ class CLog
         };
 
         // 根据日志优先级输出格式化日志
-        int DoLog(int iLogLevel, const char* szFormat, ...)
+        void DoLog(int iLogLevel, const char* szFormat, ...)
         {
             // 当前配置的日志优先级过低，不输出日志
             if (m_iLogLevel < iLogLevel)
             {
-                return 0;
+                return;
             }
 
             // 输出日志到标准输出设备
@@ -175,8 +177,6 @@ class CLog
                     fclose(pFile);
                 }
             }
-
-            return 0;
         };
 
         // 获取当前时间串，格式 => yyyy-mm-dd hh:mm:ss.us
