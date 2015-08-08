@@ -34,19 +34,31 @@ alias CD='cd'
 alias MK='make'
 alias MKC='make clean'
 
-# PS1 => user_name@ssh_ip:pwd:[#$] 
-ssh_ip="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
-export PROMPT_COMMAND='echo -ne "\033]0;$my_ip\007"'
-if [ `whoami` = root ]
-then
-    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]# "
-else
-    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$ssh_ip\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]$ "
-fi
-
 # utf-8 to gbk, gbk to utf-8
 alias u2g='iconv -f utf-8 -t gb18030//ignore'
 alias g2u='iconv -f gbk -t utf-8//ignore'
+
+# current host
+host="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
+neikurc="/tmp/.neikurc.$(tty | tr '/' '_')"
+if [ -n "$host" ]
+then
+    echo "$host" > $neikurc
+else
+    [ -f $neikurc ] && host="$(cat $neikurc)"
+fi
+if [ -z "$host" ]
+then
+    host="$(hostname)"
+fi
+
+# PS1 => user@host:pwd[#$]
+if [ `whoami` = root ]
+then
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$host\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]# "
+else
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$host\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]$ "
+fi
 
 # mkd [targets]
 # usage: mkd       ==> make deploy
