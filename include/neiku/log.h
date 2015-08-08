@@ -32,6 +32,7 @@
  *        v10: 支持自动创建日志文件路径中缺少的子目录(类似mkdir -p)
  *        v11: 优先级做为日志元信息，不混合在日志中，方便日志分析
  *             日志输出设备包含标准输出设备、文件，只输出就行了，不用返回什么
+ *        v12: 提供独立的GetFileName来从__FILE__中获取文件名
  * usage:
  *       #include <neiku/log.h>
  *
@@ -59,31 +60,26 @@
 
 #define LOG SINGLETON(neiku::CLog)
 
-#ifndef __NK_BASENAME
-#define __NK_BASENAME(filepath) \
-        (strrchr(filepath, '/') ? (strrchr(filepath, '/') + 1) : filepath)
-#endif
-
 #define LOG_ERR(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s][ERR]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
-                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_MSG(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s][MSG]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
-                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_DBG(format, args...) \
         LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s][DBG]: " \
                    format \
                    "\n" \
                    , LOG->GetTimeStr(), getpid() \
-                   , __NK_BASENAME(__FILE__), __LINE__, __FUNCTION__ \
+                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #endif
 
@@ -221,6 +217,20 @@ class CLog
             }
 
             return 0;
+        };
+
+        // 获取路径中的文件名(取代gnu/posix的basename)
+        const char* GetFileName(const char* szPath)
+        {
+            if(szPath[0] == '.' || szPath[0] == '/')
+            {
+                const char* szFileName = strrchr(szPath, '/');
+                return szFileName ? szFileName + 1 : szPath;
+            }
+            else
+            {
+                return szPath;
+            }
         };
 
     private:
