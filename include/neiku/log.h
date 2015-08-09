@@ -61,23 +61,20 @@
 #define LOG SINGLETON(neiku::CLog)
 
 #define LOG_ERR(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_ERR, "[%s][pid:%d][%s:%d][%s][ERR]: " \
-                   format \
-                   "\n" \
+        LOG->DoLog(  neiku::CLog::LOG_LEVEL_ERR \
+                   , "[%s][pid:%d][%s:%d][%s][ERR]: "format"\n" \
                    , LOG->GetTimeStr(), getpid() \
                    , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_MSG(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_MSG, "[%s][pid:%d][%s:%d][%s][MSG]: " \
-                   format \
-                   "\n" \
+        LOG->DoLog(  neiku::CLog::LOG_LEVEL_MSG \
+                   , "[%s][pid:%d][%s:%d][%s][MSG]: "format"\n" \
                    , LOG->GetTimeStr(), getpid() \
                    , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_DBG(format, args...) \
-        LOG->DoLog(neiku::CLog::LOG_LEVEL_DBG, "[%s][pid:%d][%s:%d][%s][DBG]: " \
-                   format \
-                   "\n" \
+        LOG->DoLog(  neiku::CLog::LOG_LEVEL_DBG \
+                   , "[%s][pid:%d][%s:%d][%s][DBG]: "format"\n" \
                    , LOG->GetTimeStr(), getpid() \
                    , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
@@ -103,7 +100,7 @@ class CLog
               , m_bLog2File(false)
         {};
 
-        // 设置/获取日志文件路径
+        // 设置日志文件路径
         void SetLogFile(const std::string& sLogFilePath)
         {
             m_sLogFilePath = sLogFilePath;
@@ -118,11 +115,12 @@ class CLog
             m_bLog2File = bLog2File;
         };
 
-        // 设置/获取日志优先级
+        // 设置日志优先级
         void SetLogLevel(int iLogLevel)
         {
             m_iLogLevel = iLogLevel;
         };
+
         int GetLogLevelErr()
         {
             return LOG_LEVEL_ERR;
