@@ -44,6 +44,7 @@ neikurc="/tmp/.neikurc.$(tty | tr '/' '_')"
 if [ -n "$host" ]
 then
     echo "$host" > $neikurc
+    chmod 666 $neikurc
 else
     [ -f $neikurc ] && host="$(cat $neikurc)"
 fi
@@ -51,6 +52,7 @@ if [ -z "$host" ]
 then
     host="$(hostname)"
 fi
+# TODO: delete $neikurc after logout
 
 # PS1 => user@host:pwd[#$]
 if [ `whoami` = root ]
