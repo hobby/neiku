@@ -1,4 +1,5 @@
 
+#include <inttypes.h>
 #include <neiku/log.h>
 
 void test_func()
@@ -16,11 +17,16 @@ int main(int argc, char* argv[])
 {
     test_func();
 
-    const char* logfile = "/tmp/logs/log/test_log.log";
+    const char* logfile = "test_log.log";
     LOG->SetLogFile(logfile);
     LOG->SetLog2Stdout(true);
     LOG_MSG("set log file, auto create dir, path:[%s]"
             , logfile);
+
+    // 编译期检查参数列表类型
+    std::string msg("this is string");
+    uint64_t ret(0);
+    LOG_MSG("ret:[%d], msg:[%s]", msg.c_str(), ret);
 
     return 0;
 }

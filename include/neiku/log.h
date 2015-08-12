@@ -33,6 +33,11 @@
  *        v11: 优先级做为日志元信息，不混合在日志中，方便日志分析
  *             日志输出设备包含标准输出设备、文件，只输出就行了，不用返回什么
  *        v12: 提供独立的GetFileName来从__FILE__中获取文件名
+ *        v13: 编译期使用-Wall或者-Wformat，结合__attribute__设置类似printf的参数检查
+ *             可以提前检测到日志输出是否有问题（core、未知行为）
+ *             需要注意的是，成员函数的参数列表其实隐藏了一个this指针（在首位）
+ *             https://gcc.gnu.org/onlinedocs/gcc-4.4.7/gcc/Function-Attributes.html
+ *             (3.x.y~5.x.y版本目测都可用)
  * usage:
  *       #include <neiku/log.h>
  *
@@ -140,8 +145,9 @@ class CLog
             m_bLog2Stdout = bLog2Stdout;
         };
 
-        // 根据日志优先级输出格式化日志
+        // 根据日志优先级输出格式化日志，支持检查参数与format是否相符
         void DoLog(int iLogLevel, const char* szFormat, ...)
+                         __attribute__((format(printf,3,4)))
         {
             // 当前配置的日志优先级过低，不输出日志
             if (m_iLogLevel < iLogLevel)
