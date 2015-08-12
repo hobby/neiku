@@ -17,7 +17,13 @@ int main(int argc, char* argv[])
 {
     test_func();
 
-    const char* logfile = "test_log.log";
+    if(argc != 2)
+    {
+        LOG_ERR("usage: %s logfilepath", argv[0]);
+        return -1;
+    }
+
+    const char* logfile = argv[1];
     LOG->SetLogFile(logfile);
     LOG->SetLog2Stdout(true);
     LOG_MSG("set log file, auto create dir, path:[%s]"
@@ -26,7 +32,7 @@ int main(int argc, char* argv[])
     // 编译期检查参数列表类型
     std::string msg("this is string");
     uint64_t ret(0);
-    LOG_MSG("ret:[%d], msg:[%s]", msg.c_str(), ret);
+    LOG_MSG("ret:[%lu], msg:[%s]", ret, msg.c_str());
 
     return 0;
 }

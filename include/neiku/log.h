@@ -38,6 +38,7 @@
  *             需要注意的是，成员函数的参数列表其实隐藏了一个this指针（在首位）
  *             https://gcc.gnu.org/onlinedocs/gcc-4.4.7/gcc/Function-Attributes.html
  *             (3.x.y~5.x.y版本目测都可用)
+ *        v14: 自动创建日志路径子目录之，检查一下（一般只需要创建一次）
  * usage:
  *       #include <neiku/log.h>
  *
@@ -108,10 +109,19 @@ class CLog
         // 设置日志文件路径
         void SetLogFile(const std::string& sLogFilePath)
         {
-            m_sLogFilePath = sLogFilePath;
-            SetLog2Stdout(false);
+           // 设置输出日志到文件
             SetLog2File(true);
-            MakeSubDir(m_sLogFilePath.c_str());
+            m_sLogFilePath = sLogFilePath;
+
+            // 可能缺少中间目录，自动创建之
+            struct stat64 sb64;
+            if(stat64(m_sLogFilePath.c_str(), &sb64) != 0)
+            {
+                MakeSubDir(m_sLogFilePath.c_str());
+            }
+
+            // 默认不再输出到标准输出
+            SetLog2Stdout(false);
         };
 
         // 输出日志到文件开关
