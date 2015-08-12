@@ -38,8 +38,13 @@ alias MKC='make clean'
 alias u2g='iconv -f utf-8 -t gb18030//ignore'
 alias g2u='iconv -f gbk -t utf-8//ignore'
 
-# current host
+# current host for openssh-server (5.3p1)
 host="$(echo $SSH_CONNECTION | cut -f3 -d' ')"
+if [ -z "$host" ]
+then
+    # for sshd-3.2.9.1
+    host="$(echo $SSH2_CLIENT | cut -f3 -d' ')"
+fi
 neikurc="/tmp/.neikurc.$(tty | tr '/' '_')"
 if [ -n "$host" ]
 then
