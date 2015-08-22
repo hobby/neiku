@@ -17,17 +17,21 @@ int main(int argc, char* argv[])
 {
     test_func();
 
-    if(argc != 2)
+    if(argc != 4)
     {
-        LOG_ERR("usage: %s logfilepath", argv[0]);
+        LOG_ERR("usage: %s filename maxsize maxnum", argv[0]);
         return -1;
     }
 
-    const char* logfile = argv[1];
-    LOG->SetLogFile(logfile);
+    const char* filename = argv[1];
+    int64_t maxsize = strtoull(argv[2], NULL, 0);
+    uint32_t maxnum = strtoul(argv[3], NULL, 0);
+    LOG->SetLogFile(filename, maxsize, maxnum);
     LOG->SetLog2Stdout(true);
     LOG_MSG("set log file, auto create dir, path:[%s]"
-            , logfile);
+            ", maxsize:[%lu], maxnum:[%u]"
+            , filename
+            , maxsize, maxnum);
 
     // 编译期检查参数列表类型
     std::string msg("this is string");
@@ -38,7 +42,7 @@ int main(int argc, char* argv[])
     while (true)
     {
         LOG_MSG("test outer log switch");
-        sleep(2);
+        sleep(1);
     }
 
     return 0;

@@ -42,6 +42,11 @@
  *        v15: 支持外部文件级日志开关
  *             日志文件由日志名和.log后缀组成，外部关闭日志文件由日志名和.nolog后缀组成
  *             (关闭日志文件存在时，即不输出日志到文件，但不影响输出日志到标准输出设备)
+ *        v16: 支持基于字节大小&个数的日志文件滚动，对于文件名为filename，大小为N、个数为M的滚动配置。
+ *             当M<=1时，日志只在filename.log文件中滚动
+ *             当M>1时，最新日志总在filename.log中，越旧的日志按index=[1,M-1]存储，文件名为
+ *             filename{index}.log，index越大，意味着日志越旧(方便扩充)
+ *             注意：文件大小默认限制20MB，个数限制20个
  * usage:
  *       #include <neiku/log.h>
  *
@@ -53,6 +58,8 @@
 #ifndef __NK_LOG_H__
 #define __NK_LOG_H__ 1
 
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 #include <unistd.h>
 #include <sys/time.h>
 #include <sys/stat.h>
@@ -107,18 +114,26 @@ class CLog
         CLog(): m_iLogLevel(LOG_LEVEL_MSG)
               , m_bLog2Stdout(true)
               , m_bLog2File(false)
+              , m_llLogFileMaxSize(20*1024*1024)
+              , m_dwLogFileMaxNum(20)
         {};
 
         // 设置日志文件路径
-        void SetLogFile(const std::string& sLogFileName)
+        void SetLogFile(const std::string& sLogFileName
+                        , int64_t llLogFileMaxSize = 20*1024*1024
+                        , uint32_t dwLogFileMaxNum = 20)
         {
+            m_sLogFileName.assign(sLogFileName);
+            m_llLogFileMaxSize = llLogFileMaxSize;
+            m_dwLogFileMaxNum  = dwLogFileMaxNum;
+
             // 设置输出日志到文件
             SetLog2File(true);
-            m_sLogFilePath.assign(sLogFileName);
+            m_sLogFilePath.assign(m_sLogFileName);
             m_sLogFilePath.append(".log");
 
             // 关闭日志输出文件
-            m_sNoLogFilePath.assign(sLogFileName);
+            m_sNoLogFilePath.assign(m_sLogFileName);
             m_sNoLogFilePath.append(".nolog");
 
             // 可能缺少中间目录，自动创建之
@@ -130,6 +145,13 @@ class CLog
 
             // 默认不再输出到标准输出
             SetLog2Stdout(false);
+        };
+
+        // 设置日志文件滚动
+        void SetLogFile(int64_t llLogFileMaxSize, uint32_t dwLogFileMaxNum)
+        {
+            m_llLogFileMaxSize = llLogFileMaxSize;
+            m_dwLogFileMaxNum  = dwLogFileMaxNum;
         };
 
         // 输出日志到文件开关
@@ -197,6 +219,9 @@ class CLog
                         vfprintf(pFile, szFormat, vArgs);
                         va_end(vArgs);
                         fclose(pFile);
+
+                        // 日志文件变大，尝试滚动
+                        LogFileRotate();
                     }
                 }
             }
@@ -260,13 +285,58 @@ class CLog
             }
         };
 
+        // 日志文件滚动
+        void LogFileRotate()
+        {
+            // 对于出错情况，也要尝试滚动
+            struct stat64 st64;
+            int iRet = stat64(m_sLogFilePath.c_str(), &st64);
+            if (iRet == 0 && st64.st_size < m_llLogFileMaxSize)
+            {
+                // 还没有到滚动的时候
+                return;
+            }
+
+            // 先转存当前日志文件，避免多进程同时滚动，造成混乱
+            char szTmpPath[FILENAME_MAX] = {0};
+            snprintf(szTmpPath, sizeof(szTmpPath), "%s.tmp.log"
+                     , m_sLogFileName.c_str());
+            iRet = rename(m_sLogFilePath.c_str(), szTmpPath);
+            if (iRet != 0)
+            {
+                // 可能已有进程在滚动了
+                return;
+            }
+
+            // 将{filename}[1~M-2].log文件滚到{filename}[2~M-1].log
+            for (int i = m_dwLogFileMaxNum - 2; i > 0; --i)
+            {
+                char szOldPath[FILENAME_MAX] = {0};
+                char szNewPath[FILENAME_MAX] = {0};
+                snprintf(szOldPath, sizeof(szOldPath), "%s%d.log"
+                         , m_sLogFileName.c_str(), i);
+                snprintf(szNewPath, sizeof(szNewPath), "%s%d.log"
+                         , m_sLogFileName.c_str(), i+1);
+                rename(szOldPath, szNewPath);
+            }
+
+            // 将{filename}.tmp.log文件滚到{filename}1.log
+            char szLog1Path[FILENAME_MAX] = {0};
+            snprintf(szLog1Path, sizeof(szLog1Path), "%s%d.log"
+                     , m_sLogFileName.c_str(), 1);
+            rename(szTmpPath, szLog1Path);
+        };
+
     private:
         char m_szTime[32];
         int  m_iLogLevel;
         bool m_bLog2Stdout;
         bool m_bLog2File;
+        std::string m_sLogFileName;
         std::string m_sLogFilePath;   // filename + .log
         std::string m_sNoLogFilePath; // filename + .nolog
+        int64_t  m_llLogFileMaxSize;  // in bytes
+        uint32_t m_dwLogFileMaxNum;
 };
 
 };
