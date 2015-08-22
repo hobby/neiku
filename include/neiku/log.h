@@ -38,7 +38,10 @@
  *             需要注意的是，成员函数的参数列表其实隐藏了一个this指针（在首位）
  *             https://gcc.gnu.org/onlinedocs/gcc-4.4.7/gcc/Function-Attributes.html
  *             (3.x.y~5.x.y版本目测都可用)
- *        v14: 自动创建日志路径子目录之，检查一下（一般只需要创建一次）
+ *        v14: 自动创建日志路径子目录之前，检查一下（一般只需要创建一次）
+ *        v15: 支持外部文件级日志开关
+ *             日志文件由日志名和.log后缀组成，外部关闭日志文件由日志名和.nolog后缀组成
+ *             (关闭日志文件存在时，即不输出日志到文件，但不影响输出日志到标准输出设备)
  * usage:
  *       #include <neiku/log.h>
  *
@@ -107,15 +110,20 @@ class CLog
         {};
 
         // 设置日志文件路径
-        void SetLogFile(const std::string& sLogFilePath)
+        void SetLogFile(const std::string& sLogFileName)
         {
-           // 设置输出日志到文件
+            // 设置输出日志到文件
             SetLog2File(true);
-            m_sLogFilePath = sLogFilePath;
+            m_sLogFilePath.assign(sLogFileName);
+            m_sLogFilePath.append(".log");
+
+            // 关闭日志输出文件
+            m_sNoLogFilePath.assign(sLogFileName);
+            m_sNoLogFilePath.append(".nolog");
 
             // 可能缺少中间目录，自动创建之
-            struct stat64 sb64;
-            if(stat64(m_sLogFilePath.c_str(), &sb64) != 0)
+            struct stat64 st64;
+            if (stat64(m_sLogFilePath.c_str(), &st64) != 0)
             {
                 MakeSubDir(m_sLogFilePath.c_str());
             }
@@ -177,14 +185,19 @@ class CLog
             // 输出日志到文件
             if (m_bLog2File == true)
             {
-                FILE* pFile = fopen(m_sLogFilePath.c_str(), "a");
-                if (pFile != NULL)
+                // 外部没有关闭日志，继续输出
+                struct stat64 st64;
+                if (stat64(m_sNoLogFilePath.c_str(), &st64) != 0)
                 {
-                    va_list vArgs;
-                    va_start(vArgs, szFormat);
-                    vfprintf(pFile, szFormat, vArgs);
-                    va_end(vArgs);
-                    fclose(pFile);
+                    FILE* pFile = fopen(m_sLogFilePath.c_str(), "a");
+                    if (pFile != NULL)
+                    {
+                        va_list vArgs;
+                        va_start(vArgs, szFormat);
+                        vfprintf(pFile, szFormat, vArgs);
+                        va_end(vArgs);
+                        fclose(pFile);
+                    }
                 }
             }
         };
@@ -252,7 +265,8 @@ class CLog
         int  m_iLogLevel;
         bool m_bLog2Stdout;
         bool m_bLog2File;
-        std::string m_sLogFilePath;
+        std::string m_sLogFilePath;   // filename + .log
+        std::string m_sNoLogFilePath; // filename + .nolog
 };
 
 };

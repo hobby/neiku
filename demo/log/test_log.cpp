@@ -34,5 +34,12 @@ int main(int argc, char* argv[])
     uint64_t ret(0);
     LOG_MSG("ret:[%lu], msg:[%s]", ret, msg.c_str());
 
+    // 测试外部日志开关
+    while (true)
+    {
+        LOG_MSG("test outer log switch");
+        sleep(2);
+    }
+
     return 0;
 }
