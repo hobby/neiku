@@ -307,7 +307,7 @@ int CCmdLine::ParseOptStr(const char* pszOptStr)
         if (pOption == NULL)
         {
             snprintf(m_szErrMsg, sizeof(m_szErrMsg)
-                    , "new coption fail, total-new:[%u]"
+                    , "new coption fail, total-new:[%zu]"
                     , m_vOptionPtr.size());
             return ERR_NEW_COPTION;
         }
@@ -370,7 +370,7 @@ int CCmdLine::ParseCmdLine(int iArgc, char** pArgv)
         if (pLongOptions == NULL)
         {
             snprintf(m_szErrMsg, sizeof(m_szErrMsg)
-                    , "new struct option fail, size:[%u], optstr:[%s]"
+                    , "new struct option fail, size:[%zu], optstr:[%s]"
                     , m_vLongOptions.size() + 1, m_pszOptStr);
             return ERR_NEW_OPTION;
         }
@@ -492,7 +492,7 @@ int CCmdLine::ParseCmdLine(int iArgc, char** pArgv)
 
         // 保存成功信息
         snprintf(m_szErrMsg, sizeof(m_szErrMsg)
-                 , "cmdline init succ, optstr:[%s], long-opt count:[%u]"
+                 , "cmdline init succ, optstr:[%s], long-opt count:[%zu]"
                  , m_pszOptStr, m_vLongOptions.size());
     }
 
