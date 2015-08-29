@@ -7,12 +7,9 @@
 #include <vector>
 #include <string>
 
-#include <neiku/cmdline.h>
+#include "neiku/cmdline.h"
 
-namespace yaf
-{
-namespace util
-{
+using namespace neiku;
 
 int CCmdLine::Init(int iArgc, char** pArgv, const char* pszOptStr)
 {
@@ -31,7 +28,7 @@ int CCmdLine::Init(int iArgc, char** pArgv, const char* pszOptStr)
     m_pszOptStr = pszOptStr;
 
     // 解析选项格式串
-    int iRet = ParseOptStr(pszOptStr);
+    int iRet = ParseOptStr(m_pszOptStr);
     if (iRet != 0)
     {
         return iRet;
@@ -39,32 +36,22 @@ int CCmdLine::Init(int iArgc, char** pArgv, const char* pszOptStr)
 
     // 解析命令行参数
     iRet = ParseCmdLine(iArgc, pArgv);
-    return iRet;
+    if(iRet != 0)
+    {
+        return iRet;
+    }
+    
+    return 0;
 }
 
 std::string CCmdLine::GetCwd()
 {
-    char szCwdPath[1024] = {0};
+    char szCwdPath[FILENAME_MAX] = {0};
     if (getcwd(szCwdPath, sizeof(szCwdPath)) != NULL)
     {
         return szCwdPath;
     }
     return "";
-}
-
-std::string CCmdLine::GetProgName()
-{
-    return m_sProgName;
-}
-
-const char* CCmdLine::GetErrMsg()
-{
-    return m_szErrMsg;
-}
-
-std::vector<const char*>* CCmdLine::GetArgList()
-{
-    return &m_vArgment;
 }
 
 const char* CCmdLine::GetOpt(const char* pszOptName, const char* pszDefault /* default NULL */)
@@ -561,7 +548,3 @@ CCmdLine& CCmdLine::operator & (uint64_t& ddwValue)
     return *this;
 }
 /********************** 自动提取选项数据(序列化技术) end ***********************/
-
-};
-};
-

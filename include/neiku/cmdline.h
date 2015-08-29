@@ -85,8 +85,8 @@
  * $
  */
 
-#ifndef __CMDLINE_H_
-#define __CMDLINE_H_
+#ifndef __NK_CMDLINE_H_
+#define __NK_CMDLINE_H_
 
 #include <stdint.h>
 #include <getopt.h>
@@ -94,13 +94,11 @@
 #include <vector>
 #include <string>
 
-#include <neiku/serialize.h>
-#include <neiku/singleton.h>
-#define CMDLINE SINGLETON(yaf::util::CCmdLine)
+#include "neiku/serialize.h"
+#include "neiku/singleton.h"
+#define CMDLINE SINGLETON(neiku::CCmdLine)
 
-namespace yaf
-{
-namespace util
+namespace neiku
 {
 
 class CCmdLine
@@ -158,18 +156,27 @@ class CCmdLine
         // int SetCmdName(const char*)   ///< 设置程序执行时的命令名称，即企图改变argv[0]返回的值
 
         // 获取(剩余)非选项参数
-        std::vector<const char*>* GetArgList();
+        inline std::vector<const char*>* GetArgList()
+        {
+            return &m_vArgment;
+        }
 
         // 获取程序名
         // 如/path/to/program程序，则程序名为: program
         // basename/argv[0]得到
-        std::string GetProgName();
+        inline std::string GetProgName()
+        {
+            return m_sProgName;
+        }
         
         // 获取最后出错描述
-        const char* GetErrMsg();
+        inline const char* GetErrMsg()
+        {
+            return m_szErrMsg;
+        }
         
         // 获取当前工作目录（绝对路径，无/符号结束，基于getcwd()实现）
-        static std::string GetCwd();
+        std::string GetCwd();
 
         /********************** 自动提取选项数据(序列化技术) ***********************/
     public:
@@ -209,7 +216,7 @@ class CCmdLine
     private:
         std::string m_sOptName;         ///< 当前序列化的选项名称
         /*******************************************************************/
-        
+      
     public:
         CCmdLine(): m_pszOptStr(NULL)
         {
@@ -291,7 +298,6 @@ class CCmdLine
         std::vector<struct option> m_vLongOptions;  ///< 长选项，在构造struct option[]后给getopt_long()使用
 };
 
-};
 };
 
 #endif

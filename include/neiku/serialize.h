@@ -16,13 +16,19 @@
 
 #include <neiku/string.h>
 
-#define SERIALIZE(AR, OBJ)  { yaf::util::CSerializeName oSerializeName(#OBJ); AR & oSerializeName & OBJ; };
-#define OBJDUMP(OBJ)        (CObjDumper() << OBJ).GetStr().c_str()
+#define SERIALIZE(AR, OBJ)  { neiku::CSerializeName oSerializeName(#OBJ); AR & oSerializeName & OBJ; };
+#define OBJDUMP(OBJ)        ( neiku::CObjDumper() << OBJ).str().c_str()
 
-namespace yaf
+namespace neiku
 {
-namespace util
+
+/*
+template<T>
+const char* cstr_encode(const T& t)
 {
+    return OBJDUMP(t);
+}
+*/
 
 class CSerializeName
 {
@@ -119,7 +125,7 @@ class CObjDumper
             return *this;
         }
 
-        std::string GetStr()
+        std::string str()
         {
             std::string sStr = m_sStream.str();
             if (!sStr.empty())
@@ -133,7 +139,6 @@ class CObjDumper
         std::stringstream m_sStream;
 };
 
-};
 };
 
 #endif

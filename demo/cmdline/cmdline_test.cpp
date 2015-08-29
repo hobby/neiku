@@ -1,17 +1,18 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <neiku/cmdline.h>
 
-#define OPTIONSTR \
-"-u|--username:\
-,-p|--password:\
-,-v|--verbose::\
-,-h|--help::\
-,-i|--int32:\
-,-l|--int64:\
-,-u|--uint32:\
-,-q|--uint64:"
+#include "neiku/log.h"
+#include "neiku/cmdline.h"
+
+#define OPTIONSTR "-u|--username:" \
+                  ",-p|--password:"\
+                  ",-v|--verbose::"\
+                  ",-h|--help::"\
+                  ",-i|--int32:"\
+                  ",-l|--int64:"\
+                  ",-u|--uint32:"\
+                  ",-q|--uint64:"
 
 class COptions
 {
@@ -52,6 +53,7 @@ class COptions
         };
 };
 
+
 int main(int argc, char **argv)
 {
     // 初始化命令行参数解析器
@@ -59,50 +61,43 @@ int main(int argc, char **argv)
     int iRet = CMDLINE->Init(argc, argv, OPTIONSTR, options);
     if (iRet != 0)
     {
-        printf("%s : cmdline init fail, ret:[%d], msg:[%s]\n"
+        LOG_MSG("%s : cmdline init fail, ret:[%d], msg:[%s]"
                 , CMDLINE->GetProgName().c_str(), iRet, CMDLINE->GetErrMsg());
         return -1;
     }
-
-    printf("username:[%s], password:[%s], verbose:[%d], help:[%d]"
-            ", int32:[%d], int64:[%ld], uint32:[%u], uint64:[%lu]"
-            ", int32:[%d], int64:[%ld], uint32:[%u], uint64:[%lu]\n"
-            , options.username.c_str(), options.password.c_str()
-            , options.verbose, options.help
-            , options.int32, options.int64, options.uint32, options.uint64
-            , CMDLINE->GetOptI("--int32"), CMDLINE->GetOptII("--int64")
-            , CMDLINE->GetOptUI("--uint32"), CMDLINE->GetOptUII("--uint64"));
-
+    LOG_MSG("options => %s", OBJDUMP(options));
+    
     // 输出三类选项参数值
-    printf("username:[%s]\n",  CMDLINE->GetOpt("--username", "not set username"));
-    printf("password:[%s]\n",  CMDLINE->GetOpt("--password", "not set password"));
-    printf("verbose:[%s]\n",   CMDLINE->GetOpt("--verbose") ? "set verbose" : "not set verbose");
-    printf("help:[%s]\n",      CMDLINE->GetOpt("-h") ? "set help" : "not set help");
+    LOG_MSG("username:[%s]",  CMDLINE->GetOpt("--username", "默认用户名"));
+    LOG_MSG("password:[%s]",  CMDLINE->GetOpt("--password", "默认密码"));
+    LOG_MSG("verbose:[%s]",   CMDLINE->GetOpt("--verbose") ? "set verbose" : "not set verbose");
+    LOG_MSG("help:[%s]",      CMDLINE->GetOpt("-h") ? "set help" : "not set help");
 
     // 输出非选项参数值
-    printf("remainng args:\n");
+    LOG_MSG("remainng args:");
     std::vector<const char*>* pArgList = CMDLINE->GetArgList();
     std::vector<const char*>::iterator it = pArgList->begin();
     for ( ; it != pArgList->end(); ++it)
     {
-        printf("arg:[%s]\n", *it);
+        LOG_MSG("arg:[%s]", *it);
     }
     
     // 输出当前工作目录(绝对路径，无/符号结束)
-    printf("current wroking directory:[%s]\n", CMDLINE->GetCwd().c_str());
+    LOG_MSG("current wroking directory:[%s]", CMDLINE->GetCwd().c_str());
     
     // 输出程序名
-    printf("current program name:[%s]\n", CMDLINE->GetProgName().c_str());
+    LOG_MSG("current program name:[%s]", CMDLINE->GetProgName().c_str());
 
     // 判断是否存在某参数
     if (CMDLINE->HasOpt("--verbose"))
     {
-        printf("--verbose is exist\n");
+        LOG_MSG("--verbose is exist");
     }
     else
     {
-        printf("--verbose is not exit\n");
+        LOG_MSG("--verbose is not exit");
     }
 
+    LOG_MSG("OBJDUMP(options):[%s]", OBJDUMP(options));
     return 0;
 }
