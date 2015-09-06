@@ -85,7 +85,7 @@ int main(int argc, char* argv[])
     non_const_obj.vi32.push_back(2);
     non_const_obj.vi32.push_back(3);
     non_const_obj.vt.push_back("string1");
-    non_const_obj.vt.push_back("string2");
+    non_const_obj.vt.push_back("string\r\t\n\'\"/\\\f\b2");
     non_const_obj.map.insert(std::pair<uint32_t, std::string>(1, "number1"));
     non_const_obj.map.insert(std::pair<uint32_t, std::string>(2, "number2"));
     LOG_MSG("non_const_obj:[%s]", json_encode(non_const_obj));
@@ -119,9 +119,9 @@ int main(int argc, char* argv[])
 
     // map of std::string,std::string
     std::map<std::string, std::string> ms;
-    ms.insert(std::pair<std::string, std::string>("project", "neiku"));
+    ms.insert(std::pair<std::string, std::string>("project\"", "neiku"));
     ms.insert(std::pair<std::string, std::string>("mobule", "json"));
-    ms.insert(std::pair<std::string, std::string>("submodule", "encoder"));
+    ms.insert(std::pair<std::string, std::string>("submodule", "encoder\r\n\t\""));
     LOG_MSG("map of std::string,std::string => %s", json_encode(ms));
 
     return 0;

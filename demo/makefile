@@ -8,3 +8,4 @@ DIRS = singleton \
 	   md5 \
 	   cmdline \
 	   proc \
+	   serialize \

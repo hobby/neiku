@@ -11,6 +11,10 @@
  *          v2  -- json encoder
  *              支持std::map，生成json对象；std::vector生成json数组
  *              新增json_encode(obj)宏，方便使用dump数据
+ *          v3  -- json encoder
+ *              引入jsoncpp第三方库，用于支持json字符串转义输出、后续
+ *              json decoder实现基础
+ *              TODO: 后续使用std::string来代替std::stringstream
  * usage:
  *       #include "neiku/json.h"
  *
@@ -27,6 +31,8 @@
 #include <string>
 #include <vector>
 #include <map>
+
+#include "neiku/jsoncpp.h"
 
 #ifndef SERIALIZE
 #define SERIALIZE(ar, obj) { ar & #obj & obj; }
@@ -99,7 +105,7 @@ class CJsonEncoder
         // 字符串两边由对引号包住
         CJsonEncoder& operator & (std::string& str)
         {
-             m_ssJson << "\"" << str << "\"";
+             m_ssJson << Json::valueToQuotedString(str.c_str());
             return *this;
         }
 
@@ -130,11 +136,16 @@ class CJsonEncoder
             if (!map.empty())
             {
                 typename std::map<KEY, VALUE>::iterator it = map.begin();
-                m_ssJson << "\"" << it->first << "\":";
+                std::stringstream ss;
+                ss << it->first;
+                m_ssJson << Json::valueToQuotedString(ss.str().c_str()) << ":";
                 *this & it->second;
                 for (++it; it != map.end(); ++it)
                 {
-                    m_ssJson << ",\"" << it->first << "\":";
+                    // std::stringstream::str("") 才是真正的清空方法
+                    ss.str("");
+                    ss << it->first;
+                    m_ssJson << "," << Json::valueToQuotedString(ss.str().c_str()) << ":";
                     *this & it->second;
                 }
             }
