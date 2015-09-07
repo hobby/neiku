@@ -69,8 +69,10 @@ endif
 # 支持32/64位编译环境
 ifeq ($(shell uname -m), x86_64)
 COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib64
+3RD_LIB_PATH=$(NEIKU_PROJ_PATH)/3rd/lib64
 else
 COMM_LIB_PATH=$(NEIKU_PROJ_PATH)/lib
+3RD_LIB_PATH=$(NEIKU_PROJ_PATH)/3rd/lib
 endif
 
 # 支持32/64位交叉编译

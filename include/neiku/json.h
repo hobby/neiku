@@ -15,10 +15,11 @@
  *              引入jsoncpp第三方库，用于支持json字符串转义输出、后续
  *              json decoder实现基础
  *              TODO: 后续使用std::string来代替std::stringstream
+ *          v4  将jsoncpp库放到3rd下面
  * usage:
  *       #include "neiku/json.h"
  *
- * compile: 
+ * compile: $(neiku_config --include --libs json)
  *
  * vim:ts=4;sw=4;expandtab
  */
@@ -32,7 +33,7 @@
 #include <vector>
 #include <map>
 
-#include "neiku/jsoncpp.h"
+#include "jsoncpp/jsoncpp.h"
 
 #ifndef SERIALIZE
 #define SERIALIZE(ar, obj) { ar & #obj & obj; }
