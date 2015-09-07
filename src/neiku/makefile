@@ -11,7 +11,6 @@ VPATH =
 OUTPUT = libneiku.a
 
 LIBNEIKU_A_OBJS = charset.o \
-                  jsoncpp.o \
 
 ALL: $(OUTPUT)
 

@@ -73,8 +73,7 @@ license you like.
 
 
 
-//#include "jsoncpp.h"
-#include <neiku/jsoncpp.h>
+#include "jsoncpp.h"
 
 #ifndef JSON_IS_AMALGAMATION
 #error "Compile with -I PATH_TO_JSON_DIRECTORY"
