@@ -27,8 +27,6 @@ alias mkc='make clean'
 alias grep='grep --color'
 alias tree='tree -C'
 alias kall='killall'
-alias p='ps -elf | grep --color'
-alias ps?='ps -elf | grep --color'
 
 alias CD='cd'
 alias MK='make'
@@ -126,3 +124,25 @@ function nb2ip() # nb2ip 16885952 => 192.168.1.1
     local d=$(($1 & 0x000000ff))
     echo $d.$c.$b.$a
 }
+
+# nps <proc name>  -- 模糊查询进程信息
+function nps()
+{
+    local cmd="$1"
+    local fmt='uid,euid,pid,ppid,tty,lstart,cmd'
+    if [ -n "$cmd" ] ; then
+       ps -e -o $fmt | head -n1; ps -e -o $fmt | grep --color "$cmd"
+   else
+       ps -e -o $fmt
+   fi
+}
+alias p='nps'
+alias ps?='nps'
+
+# nid uid  -- 根据uid查询username
+function nid()
+{
+    local uid="$1"
+    awk -F':' '{printf "%s\t%s\n", $1,$3}' /etc/passwd | grep "\<$uid\>" | cut -f1
+}
+alias id?='nid'
