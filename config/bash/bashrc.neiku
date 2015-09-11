@@ -81,6 +81,34 @@ function mkd()
 }
 alias MKD='mkd'
 
+# mkt [targets]
+# usage: mkt       ==> make stop
+#        mkt a b c ==> make stop OUTPUT="a b c"
+# TODO: make -f xxx [targets]
+function mkt()
+{
+    if [ $# -gt 0 ] ; then
+        make stop OUTPUT="$*"
+    else
+        make stop
+    fi
+}
+alias MKT='mkt'
+
+# mkr [targets]
+# usage: mkr       ==> make restart
+#        mkr a b c ==> make restart OUTPUT="a b c"
+# TODO: make -f xxx [targets]
+function mkr()
+{
+    if [ $# -gt 0 ] ; then
+        make restart OUTPUT="$*"
+    else
+        make restart
+    fi
+}
+alias MKR='mkr'
+
 # ipv4 addr <==> ip net-bytes
 function ip2nb() # ip2nb 192.168.1.1 => 16885952
 {
