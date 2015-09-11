@@ -17,7 +17,9 @@
  *              TODO: 后续使用std::string来代替std::stringstream
  *          v4  将jsoncpp库放到3rd下面
  *          v5  -- json encoder
- *              支持json格式化(添加换行、缩进)，提供可读性
+ *              支持json格式化(添加换行、缩进)，提高可读性
+ *          v6  -- json encoder
+ *              支持bool类型
  * usage:
  *       #include "neiku/json.h"
  *
@@ -95,6 +97,19 @@ class CJsonEncoder
                 {
                     m_ssJson << "," << "\n" << Indent() << "\"" << szKeyName << "\": ";
                 }
+            }
+            return *this;
+        }
+
+        CJsonEncoder& operator & (bool b)
+        {
+            if (b == true)
+            {
+                m_ssJson << "true";
+            }
+            else
+            {
+                m_ssJson << "false";
             }
             return *this;
         }

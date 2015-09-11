@@ -8,11 +8,13 @@ class CObj
         int i;
         int j;
         int k;
+        bool b_true;
+        bool b_false;
 
         std::vector<std::string> vt;
         std::map<uint32_t, std::string> map;
 
-        CObj(): i(100), j(200), k(300)
+        CObj(): i(100), j(200), k(300), b_true(true), b_false(false)
         {};
 
         template <class AR>
@@ -23,6 +25,8 @@ class CObj
             SERIALIZE(ar, vt);
             SERIALIZE(ar, k);
             SERIALIZE(ar, map);
+            SERIALIZE(ar, b_true);
+            SERIALIZE(ar, b_false);
             return ar;
         };
 };
