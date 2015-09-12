@@ -79,6 +79,46 @@ class CObject
         }
 };
 
+class CData
+{
+public:
+    int32_t id2;
+    std::string name2;
+    bool b;
+
+    CData(): id2(0), b(false)
+    {}
+
+    template <typename AR>
+    AR& serialize(AR& ar)
+    {
+        SERIALIZE(ar, id2);
+        SERIALIZE(ar, name2);
+        SERIALIZE(ar, b);
+        return ar;
+    }
+};
+
+class CPerson
+{
+public:
+    int32_t id;
+    std::string name;
+    CData data;
+
+    CPerson(): id(0)
+    {}
+
+    template <typename AR>
+    AR& serialize(AR& ar)
+    {
+        SERIALIZE(ar, id);
+        SERIALIZE(ar, name);
+        SERIALIZE(ar, data);
+        return ar;
+    }
+};
+
 int main(int argc, char* argv[])
 {
     // 自定义对象
@@ -95,5 +135,17 @@ int main(int argc, char* argv[])
     LOG_MSG("json_encode:[%s]", json_encode(non_const_obj));
 
     LOG_MSG("json_encode_ml:\n%s", json_encode_ml(non_const_obj));
+
+    // 反序列化
+    std::string sJson = "{\"id\":123456, \"name\":\"\'hobby\'\",\"data\":{\"id2\":98765,\"name2\":\"哈哈\",\"b\":true}}";
+    neiku::CJsonDecoder oDecoder;
+    if (oDecoder.Parse(sJson) != 0)
+    {
+        return -1;
+    }
+
+    CPerson person;
+    oDecoder >> person;
+    LOG_MSG("person:\n%s", json_encode_ml(person));
     return 0;
 }

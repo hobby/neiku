@@ -22,6 +22,9 @@
  *              支持bool类型
  *          v7  -- json encoder
  *              区分单行json和格式化json生成工具，不要撸在一起
+ *          v8  -- json decoder
+ *              基于jsoncpp、重载、宏技术，简单实现json字符串自动转成C++对象
+ *　　　　　　　支持对象(嵌套)、bool/int32/64,uint32/64,std::string
  * usage:
  *       #include "neiku/json.h"
  *
@@ -368,6 +371,85 @@ class CJsonEncoderMl
         int  m_iIndentNum;
 };
 
+// JsonDecoder -- 支持JSON字符串向C++对象反序列化
+class CJsonDecoder
+{
+    public:
+        CJsonDecoder(): m_pCurrJsonValue(NULL)
+                      , m_szKeyName(NULL)
+        {}
+
+        int Parse(const std::string& sJson)
+        {
+            Json::Reader reader;
+            if (!reader.parse(sJson.c_str(), m_oJsonValueRoot))
+            {
+                LOG_ERR("parse json fail, json:[%s]", sJson.c_str());
+                return -1;
+            }
+            if (!m_oJsonValueRoot.isObject() && !m_oJsonValueRoot.isArray())
+            {
+                LOG_ERR("invalid object/array, json:[%s]", sJson.c_str());
+                return -1;
+            }
+            m_pCurrJsonValue = &m_oJsonValueRoot;
+            return 0;
+        }
+
+        // json decode
+        template <class T>
+        CJsonDecoder& operator >> (T& o)
+        {
+            return *this & o;
+        }
+
+    public:
+        CJsonDecoder& operator & (const char* szKeyName)
+        {
+            m_szKeyName = szKeyName;
+            return *this;
+        }
+
+#define GEN_OPERATOR(type, method) \
+        CJsonDecoder& operator & (type& o) \
+        { \
+            if (m_pCurrJsonValue->isMember(m_szKeyName)) \
+            { \
+                const Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName]; \
+                o = value.method(); \
+            } \
+            return *this; \
+        }
+        GEN_OPERATOR(bool,        asBool);
+        GEN_OPERATOR(int32_t,     asInt);
+        GEN_OPERATOR(int64_t,     asInt64);
+        GEN_OPERATOR(uint32_t,    asUInt);
+        GEN_OPERATOR(uint64_t,    asUInt64);
+        GEN_OPERATOR(std::string, asString);
+
+        template <class T>
+        CJsonDecoder& operator & (T& o)
+        {
+            Json::Value* pJsonValue = m_pCurrJsonValue;
+            if (m_szKeyName != NULL)
+            {
+                const Json::Value& obj = (*pJsonValue)[m_szKeyName];
+                m_pCurrJsonValue = const_cast<Json::Value*>(&obj);
+                o.serialize(*this);
+            }
+            else
+            {
+                o.serialize(*this);
+            }
+            m_pCurrJsonValue = pJsonValue;
+            return *this;
+        }
+
+    private:
+        Json::Value  m_oJsonValueRoot;
+        Json::Value* m_pCurrJsonValue;
+        const char*  m_szKeyName;
+};
 };
 
 #endif
