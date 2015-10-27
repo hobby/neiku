@@ -60,9 +60,9 @@ fi
 # PS1 => user@host:pwd[#$]
 if [ `whoami` = root ]
 then
-    export PS1="\e[31;1m\u\e[0m@\e[32;1m$host\e[0m:\e[35;1m\w\e[0m\e[33;1m\$(__git_ps1)\e[0m# "
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$host\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\[\e[33;1m\]\$(__git_ps1)\[\e[0m\]# "
 else
-    export PS1="\e[31;1m\u\e[0m@\e[32;1m$host\e[0m:\e[35;1m\w\e[0m\e[33;1m\$(__git_ps1)\e[0m$ "
+    export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$host\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\[\e[33;1m\]\$(__git_ps1)\[\e[0m\]$ "
 fi
 
 # mkd [targets]
