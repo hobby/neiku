@@ -43,13 +43,16 @@ then
     # for sshd-3.2.9.1
     host="$(echo $SSH2_CLIENT | cut -f3 -d' ')"
 fi
-neikurc="/tmp/.neikurc.$(tty | tr '/' '_')"
-if [ -n "$host" ]
+if tty >/dev/null 2>&1
 then
-    echo "$host" > $neikurc
-    chmod 666 $neikurc
-else
-    [ -f $neikurc ] && host="$(cat $neikurc)"
+    neikurc="/tmp/.neikurc.$(tty | tr '/' '_')"
+    if [ -n "$host" ]
+    then
+        echo "$host" > $neikurc
+        chmod 666 $neikurc
+    else
+        [ -f $neikurc ] && host="$(cat $neikurc)"
+    fi
 fi
 if [ -z "$host" ]
 then
