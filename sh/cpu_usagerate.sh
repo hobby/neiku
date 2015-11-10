@@ -8,7 +8,6 @@
 # Usage:  cpu_usagerate.sh [--delay-ms=DELAYMS]
 # Algorithm: cpu usage rate = (user+nice+sys+iowait+irq+softird) / (user+nice+sys+iowait+irq+softird + idle) * 100%
 # More:   /proc/stat
-# Require: bash >= 4.0.0
 # 
 
 # 默认刷新周期是5秒
@@ -31,17 +30,18 @@ done
 echo "begin show cpu usagerate with ${show_delay_ms}ms delay, exit with crtl+c."
 
 # cpu使用率、状态数据
-declare -A cpu_usagerate
-declare -A cpu_name
-declare -A cpu_stat_user
-declare -A cpu_stat_nice
-declare -A cpu_stat_sys
-declare -A cpu_stat_idle
-declare -A cpu_stat_iowait
-declare -A cpu_stat_irq
-declare -A cpu_stat_softirq
-#declare -A cpu_stat_steal
-#declare -A cpu_stat_guest
+declare -a cpu_index
+declare -a cpu_usagerate
+declare -a cpu_name
+declare -a cpu_stat_user
+declare -a cpu_stat_nice
+declare -a cpu_stat_sys
+declare -a cpu_stat_idle
+declare -a cpu_stat_iowait
+declare -a cpu_stat_irq
+declare -a cpu_stat_softirq
+#declare -a cpu_stat_steal
+#declare -a cpu_stat_guest
 
 # 初始记录当前cpu数据
 i=0
@@ -53,21 +53,23 @@ do
     fi
     
     # 记录每个cpu的当前状态
-    let i+=1;
+    cpu_index[$i]=$i
     cpu_name[$i]=$name
-    cpu_usagerate[$name]=0    
-    cpu_stat_user[$name]=$user
-    cpu_stat_nice[$name]=$nice
-    cpu_stat_sys[$name]=$sys
-    cpu_stat_idle[$name]=$idle
-    cpu_stat_iowait[$name]=$iowait
-    cpu_stat_irq[$name]=$irq
-    cpu_stat_softirq[$name]=$softirq
+    cpu_usagerate[$i]=0
+    cpu_stat_user[$i]=$user
+    cpu_stat_nice[$i]=$nice
+    cpu_stat_sys[$i]=$sys
+    cpu_stat_idle[$i]=$idle
+    cpu_stat_iowait[$i]=$iowait
+    cpu_stat_irq[$i]=$irq
+    cpu_stat_softirq[$i]=$softirq
+    let i+=1;
 done < /proc/stat
 
 # 每隔delayms毫秒，计算每个cpu的使用率
 while usleep $((show_delay_ms*1000))
 do
+    i=0
     while read name user nice sys idle iowait irq softirq steal guest
     do
         # 只使用cpu数据
@@ -77,20 +79,20 @@ do
 
         # 上次cpu使用情况
         preused=0
-        let preused+=cpu_stat_user[$name]
-        let preused+=cpu_stat_nice[$name]
-        let preused+=cpu_stat_sys[$name]
-        let preused+=cpu_stat_iowait[$name]
-        let preused+=cpu_stat_irq[$name]
-        let preused+=cpu_stat_softirq[$name]
+        let preused+=cpu_stat_user[$i]
+        let preused+=cpu_stat_nice[$i]
+        let preused+=cpu_stat_sys[$i]
+        let preused+=cpu_stat_iowait[$i]
+        let preused+=cpu_stat_irq[$i]
+        let preused+=cpu_stat_softirq[$i]
         pretotal=0
-        let pretotal+=cpu_stat_user[$name]
-        let pretotal+=cpu_stat_nice[$name]
-        let pretotal+=cpu_stat_sys[$name]
-        let pretotal+=cpu_stat_idle[$name]
-        let pretotal+=cpu_stat_iowait[$name]
-        let pretotal+=cpu_stat_irq[$name]
-        let pretotal+=cpu_stat_softirq[$name]
+        let pretotal+=cpu_stat_user[$i]
+        let pretotal+=cpu_stat_nice[$i]
+        let pretotal+=cpu_stat_sys[$i]
+        let pretotal+=cpu_stat_idle[$i]
+        let pretotal+=cpu_stat_iowait[$i]
+        let pretotal+=cpu_stat_irq[$i]
+        let pretotal+=cpu_stat_softirq[$i]
 
         # 当前cpu使用情况
         curused=0
@@ -117,21 +119,23 @@ do
         let usagerate=100*delta_used/delta_total
 
         # 记录当前cpu的使用率
-        cpu_usagerate[$name]=$usagerate
-        cpu_stat_user[$name]=$user
-        cpu_stat_nice[$name]=$nice
-        cpu_stat_sys[$name]=$sys
-        cpu_stat_idle[$name]=$idle
-        cpu_stat_iowait[$name]=$iowait
-        cpu_stat_irq[$name]=$irq
-        cpu_stat_softirq[$name]=$softirq
+        cpu_usagerate[$i]=$usagerate
+        cpu_stat_user[$i]=$user
+        cpu_stat_nice[$i]=$nice
+        cpu_stat_sys[$i]=$sys
+        cpu_stat_idle[$i]=$idle
+        cpu_stat_iowait[$i]=$iowait
+        cpu_stat_irq[$i]=$irq
+        cpu_stat_softirq[$i]=$softirq
+
+        let i+=1;
     done < /proc/stat
 
     # 打印各个cpu的使用率
     echo -n "[`date +'%F %T'`] "
-    for name in ${cpu_name[@]}
+    for i in ${cpu_index[@]}
     do
-        echo -n "$name=${cpu_usagerate[$name]}% "
+        echo -n "${cpu_name[$i]}=${cpu_usagerate[$i]}% "
     done
     echo
 done
