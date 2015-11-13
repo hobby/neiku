@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #
-# File:   neiku/sh/cpu_usagerate.sh
-# Brief:  show cpu usage rate.
+# File:   neiku/sh/cpu_usagerate_sys.sh
+# Brief:  show cpu usage rate for in kernel mode.
 # Author: Hobby <ku7d@qq.com>
 # Date:   2015/11/10
 # Usage:  cpu_usagerate.sh [--delay-ms=DELAYMS]
-# Algorithm: cpu usage rate = (user+nice+sys+iowait+irq+softird) / (user+nice+sys+iowait+irq+softird + idle) * 100%
+# Algorithm: cpu usage rate = (sys+iowait+irq+softird) / (user+nice + sys+iowait+irq+softird + idle) * 100%
 # More:   /proc/stat
 # 
 
@@ -79,24 +79,24 @@ do
 
         # 上次cpu使用情况
         preused=0
-        let preused+=cpu_stat_user[$i]
-        let preused+=cpu_stat_nice[$i]
         let preused+=cpu_stat_sys[$i]
         let preused+=cpu_stat_iowait[$i]
         let preused+=cpu_stat_irq[$i]
         let preused+=cpu_stat_softirq[$i]
         pretotal=$preused
+        let pretotal+=cpu_stat_user[$i]
+        let pretotal+=cpu_stat_nice[$i]
         let pretotal+=cpu_stat_idle[$i]
 
         # 当前cpu使用情况
         curused=0
-        let curused+=$user
-        let curused+=$nice
         let curused+=$sys
         let curused+=$iowait
         let curused+=$irq
         let curused+=$softirq
         curtotal=$curused
+        let curtotal+=$user
+        let curtotal+=$nice
         let curtotal+=$idle
 
         # 计算delayms毫秒时间内的cpu平均使用率
