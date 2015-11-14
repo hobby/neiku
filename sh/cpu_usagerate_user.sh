@@ -5,8 +5,8 @@
 # Brief:  show cpu usage rate for in user mode.
 # Author: Hobby <ku7d@qq.com>
 # Date:   2015/11/10
-# Usage:  cpu_usagerate.sh [--delay-ms=DELAYMS]
-# Algorithm: cpu usage rate = (user+nice) / (user+nice + sys+iowait+irq+softird+idle) * 100%
+# Usage:  cpu_usagerate_user.sh [--delay-ms=DELAYMS]
+# Algorithm: cpu usage rate = (user+nice) / (user+nice + sys+irq+softirq +idle+iowait) * 100%
 # More:   /proc/stat
 # 
 
