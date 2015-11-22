@@ -22,15 +22,11 @@ alias mv='mv'
 alias l='ls -l --color'
 alias ll='ls -l --color'
 alias la='ls -la --color'
-alias mk='make'
-alias mkc='make clean'
 alias grep='grep --color'
 alias tree='tree -C'
 alias kall='killall'
 
 alias CD='cd'
-alias MK='make'
-alias MKC='make clean'
 
 # utf-8 to gbk, gbk to utf-8
 alias u2g='iconv -f utf-8 -t gb18030//ignore'
@@ -67,48 +63,6 @@ then
 else
     export PS1="\[\e[31;1m\]\u\[\e[0m\]@\[\e[32;1m\]$host\[\e[0m\]:\[\e[35;1m\]\w\[\e[0m\]\[\e[33;1m\]\$(__git_ps1)\[\e[0m\]$ "
 fi
-
-# mkd [targets]
-# usage: mkd       ==> make deploy
-#        mkd a b c ==> make deploy OUTPUT="a b c"
-# TODO: make -f xxx [targets]
-function mkd()
-{
-    if [ $# -gt 0 ] ; then
-        make deploy OUTPUT="$*"
-    else
-        make deploy
-    fi
-}
-alias MKD='mkd'
-
-# mkt [targets]
-# usage: mkt       ==> make stop
-#        mkt a b c ==> make stop OUTPUT="a b c"
-# TODO: make -f xxx [targets]
-function mkt()
-{
-    if [ $# -gt 0 ] ; then
-        make stop OUTPUT="$*"
-    else
-        make stop
-    fi
-}
-alias MKT='mkt'
-
-# mkr [targets]
-# usage: mkr       ==> make restart
-#        mkr a b c ==> make restart OUTPUT="a b c"
-# TODO: make -f xxx [targets]
-function mkr()
-{
-    if [ $# -gt 0 ] ; then
-        make restart OUTPUT="$*"
-    else
-        make restart
-    fi
-}
-alias MKR='mkr'
 
 # ipv4 addr <==> ip net-bytes
 function ip2nb() # ip2nb 192.168.1.1 => 16885952
