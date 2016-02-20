@@ -1,0 +1,76 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+############################################################
+# NAME
+#     git-pushex - expanded git-push
+#                  with pre-push/post-push hooks enabled
+#
+# SYNOPSIS
+#     git pushex [ OPTIONS(git push) ] ...
+#
+# INSTALL
+#     for personal use: copy it to $HOME/bin
+#     for everyone use: copy it to `git --exec-path`
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com> 
+#
+# SEE ALSO
+#     git help push
+#
+# VERSION
+#     2016/02/20: 支持pre-push/post-push hooks
+#
+############################################################
+
+# wrapper
+fatal() { echo "fatal: $@" >&2; }
+debug() { [ -n "$debug" ] && echo "debug: $@" >&2; }
+
+# find .git directory
+gitdir="`pwd -P`/.git"
+if [ ! -d "$gitdir" ] ; then
+    # searching .git
+    gitdir="`dirname $(dirname "$gitdir")`/.git"
+    while [ "`dirname "$gitdir"`" != "/" ] ; do
+        [ -d "$gitdir" ] && break
+        gitdir="`dirname $(dirname "$gitdir")`/.git"
+    done
+fi
+if [ ! -d "$gitdir" ] ; then
+    # still not found
+    fatal 'Not a git repository (or any of the parent directories): .git'
+    exit 1
+fi
+debug "gitdir=$gitdir"
+
+# run pre-push before git-push
+runpath="$gitdir/hooks/pre-push"
+if [ -x "$runpath" ] ; then
+    debug "$runpath exists and execute premission is granted"
+    $runpath "$@"
+    if [ $? -ne 0 ] ; then
+        debug "`basename $0`: run pre-push fail, pre-push:[$runpath]"
+        exit 1
+    fi
+fi
+
+# run git-push
+git push "$@"
+ret=$?
+if [ $ret -ne 0 ] ; then
+    # fail and exit immediately
+    exit $?
+fi
+
+# run post-push after git-push
+runpath="$gitdir/hooks/post-push"
+if [ -x "$runpath" ] ; then
+    debug "$runpath exists and execute premission is granted"
+    $runpath "$@"
+    if [ $? -ne 0 ] ; then
+        debug "`basename $0`: run post-push fail, post-push:[$runpath]"
+        exit 1
+    fi
+fi

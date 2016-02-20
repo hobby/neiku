@@ -1,6 +1,7 @@
 
 git_completion_bash = `pwd`/git-completion.bash
 git_prompt_sh = `pwd`/git-prompt.sh
+git_pushex = `pwd`/git-pushex
 
 all:
 	@echo "Usage: make [install | clean]"
@@ -24,3 +25,6 @@ install:
 	echo -e "#" >> ~/.bashrc
 	@echo -e "\e[32;1minstall ${git_completion_bash} ---> succ\e[0m"
 	@echo -e "\e[32;1minstall ${git_prompt_sh} ---> succ\e[0m"
+	@echo -e "\e[32;1minstall ${git_pushex}\e[0m"
+	ln -sfv ${git_pushex} ~/bin/
+	@echo -e "\e[32;1minstall ${git_pushex} ---> succ\e[0m"
