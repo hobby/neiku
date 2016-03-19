@@ -1,0 +1,5 @@
+# vim:ts=4:sw=4:ft=conf:expandtab
+
+# hosts:
+# name rsa    ip port username rsapkeypath
+# name passwd ip port username password

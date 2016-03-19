@@ -1,0 +1,70 @@
+#!/usr/bin/expect --
+# vim:ts=4:sw=4:expandtab
+
+#######################################################################
+# NAME
+#     dssh - dox's ssh tool for login remote host without proxy
+#
+# SYNOPSIS
+#     dssh username password hostname hostport
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com> 
+#
+# SEE ALSO
+#     dgo
+#     ssh
+#     expect --help
+#
+# VERSION
+#     2016/03/19: 支持使用ssh(无跳板机)登录远程机器
+#
+#######################################################################
+
+set username "[lindex $argv 0]"
+set password "[lindex $argv 1]"
+set hostname "[lindex $argv 2]"
+set hostport "[lindex $argv 3]"
+set timeout  -1
+
+if { $username == "" } {
+    # for login shell (passwd)
+    send_user "Usage: dssh username password hostname hostport\n"
+    exit
+}
+
+spawn -noecho ssh -p$hostport $username@$hostname
+expect {
+    # say 'yes' for the first connection (passwd)
+    "(yes/no)?" {
+        send "yes\r"
+
+        # now ask for password
+        expect "password:"
+        send "$password\r"
+    }
+
+    # ask for password on non-first connection (passwd)
+    "password:" {
+        send "$password\r"
+    }
+
+    # for login shell (rsa), \\$ is special for rsa/passwd
+    -re "#|>|\\$" {
+        interact
+        exit
+    }
+
+    # for exit (rsa)
+    eof {
+        exit
+    }
+
+    # error occurred, then exit
+    "ssh" {
+        exit
+    }
+}
+
+interact
+exit

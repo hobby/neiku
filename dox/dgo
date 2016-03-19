@@ -1,0 +1,82 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+############################################################
+# NAME
+#     dgo - dox's tool for go into remote host
+#
+# SYNOPSIS
+#     dgo { host-name | host-ip }
+#
+#     debug=on dgo ...
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# SEE ALSO
+#     doxrc_hosts
+#
+# VERSION
+#     2016/03/19: 支持(无跳板机)快速登录指定主机
+#
+############################################################
+
+# help
+function help()
+{
+    echo "Usage: dgo { host-name | host-ip }"
+    echo "Report bugs to <ku7d@qq.com>"
+}
+
+# dgo { host-name | host-ip }
+host="$1"
+if [ "$host" = "" ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+
+# load host config
+path=./doxrc_hosts
+hname=
+htype=
+haddr=
+hport=
+huser=
+hpass=
+eval `grep -v -E '^#|^$' $path 2>/dev/null \
+      | grep $host 2>/dev/null             \
+      | head -n1                           \
+      | awk '{printf "hname=%s; htype=%s;  \
+                      haddr=%s; hport=%s;  \
+                      huser=%s; hpass=%s"  \
+                     , $1, $2              \
+                     , $3, $4              \
+                     , $5, $6}'`
+
+if [    -z "$hname" -o -z "$htype" \
+     -o -z "$haddr" -o -z "$hport" \
+     -o -z "$huser" -o -z "$hpass" ] ; then
+    dlog error "check host config fail,"         \
+               "hname:[$hname], htype:[$htype]," \
+               "haddr:[$haddr], hport:[$hport]," \
+               "huser:[$huser], hpass:[$hpass]"
+    exit 1
+fi
+dlog debug "load host config succ,"          \
+           "hname:[$hname], htype:[$htype]," \
+           "haddr:[$haddr], hport:[$hport]," \
+           "huser:[$huser], hpass:[$hpass]"
+
+# login host via ssh without proxy
+case "$htype" in
+    rsa)
+        ssh -i $hpass -p $hport $huser@$haddr
+        ;;
+    passwd)
+        dssh $huser $hpass $haddr $hport
+        ;;
+    *)
+        echo "host type unsupported, type:[$htype]," \
+             "supported type:[rsa, passwd]"
+        ;;
+esac

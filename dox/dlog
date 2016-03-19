@@ -1,0 +1,50 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+############################################################
+# NAME
+#     dlog - dox's logger
+#
+# SYNOPSIS
+#     dlog error|normal|debug message ...
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com> 
+#
+# VERSION
+#     2016/03/20: 基于mkx v3.5 mklog实现
+#                 error  -> STDERR(红色)
+#                 normal -> STDOUT(绿色)
+#                 debug  -> STDOUT(黄色)
+#                 tip    -> STDOUT(紫色, 无换行)
+#
+############################################################
+
+function normaltext()  { echo -n  "$*"; } 
+function redtext()     { echo -en "\e[31;1m$*\e[0m"; }
+function greentext()   { echo -en "\e[32;1m$*\e[0m"; }
+function pinktext()    { echo -en "\e[35;1m$*\e[0m"; }
+function yellowtext()  { echo -en "\e[33;1m$*\e[0m"; }
+
+if [ $# -lt 2 ]
+then
+    echo "usage: $0 error|normal|debug message ..." >&2
+    exit 1
+fi
+
+type="$1"
+shift 1
+
+if [ "$type" = "error" ]
+then
+    echo "`redtext $*`" >&2
+elif [ "$type" = "normal" ]
+then
+    echo "`greentext $*`"
+elif [ "$type" = "tip" ]
+then
+    echo -n "`pinktext "$*"`"
+elif [ "$type" = "debug" ]
+then
+    if [ -n "$debug" ] ; then echo "`yellowtext $*`" >&2; fi
+fi
