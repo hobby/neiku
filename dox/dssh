@@ -28,7 +28,6 @@ set hostport "[lindex $argv 3]"
 set timeout  -1
 
 if { $username == "" } {
-    # for login shell (passwd)
     send_user "Usage: dssh username password hostname hostport\n"
     exit
 }

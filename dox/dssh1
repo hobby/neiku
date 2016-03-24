@@ -1,0 +1,116 @@
+#!/usr/bin/expect --
+# vim:ts=4:sw=4:expandtab
+
+#######################################################################
+# NAME
+#     dssh1 - dox's ssh tool for login remote host with 1 proxy
+#
+# SYNOPSIS
+#     dssh1 proxy_username proxy_password proxy_hostname proxy_hostport \
+#           remote_username remote_password remote_hostname remote_hostport
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com> 
+#
+# SEE ALSO
+#     dgo
+#     ssh
+#     expect --help
+#
+# VERSION
+#     2016/03/20: 支持使用ssh+1层跳板机登录远程机器
+#
+#######################################################################
+
+# proxy host config
+set proxy_username   "[lindex $argv 0]"
+set proxy_password   "[lindex $argv 1]"
+set proxy_hostname   "[lindex $argv 2]"
+set proxy_hostport   "[lindex $argv 3]"
+
+# remote host config
+set remote_username  "[lindex $argv 4]"
+set remote_password  "[lindex $argv 5]"
+set remote_hostname  "[lindex $argv 6]"
+set remote_hostport  "[lindex $argv 7]"
+
+# expect config
+set timeout -1
+
+if { $proxy_username == "" } {
+    send_user "Usage: dssh1 proxy_username proxy_password porxy_hostname proxy_hostport\n"
+    send_user "             remote_username remote_password remote_hostname remote_hostport\n"
+    exit
+}
+
+send_user "ssh login to $remote_username@$remote_hostname via $proxy_username@$proxy_hostname\n"
+spawn -noecho ssh -t -p$proxy_hostport $proxy_username@$proxy_hostname ssh -p$remote_hostport $remote_username@$remote_hostname
+
+# expect for proxy
+expect {
+    # say 'yes' for the first connection (passwd)
+    "(yes/no)?" {
+        send "yes\r"
+
+        # now ask for password
+        expect "password:"
+        send "$proxy_password\r"
+    }
+
+    # ask for password on non-first connection (passwd)
+    "password:" {
+        send "$proxy_password\r"
+    }
+
+    # for login shell (rsa), \\$ is special for rsa/passwd
+    -re "#|>|\\$" {
+        interact
+        exit
+    }
+
+    # for exit (rsa)
+    eof {
+        exit
+    }
+
+    # error occurred, then exit
+    "ssh" {
+        exit
+    }
+}
+
+# expect for remote
+expect {
+    # say 'yes' for the first connection (passwd)
+    "(yes/no)?" {
+        send "yes\r"
+
+        # now ask for password
+        expect "password:"
+        send "$remote_password\r"
+    }
+
+    # ask for password on non-first connection (passwd)
+    "password:" {
+        send "$remote_password\r"
+    }
+
+    # for login shell (rsa), \\$ is special for rsa/passwd
+    -re "#|>|\\$" {
+        interact
+        exit
+    }
+
+    # for exit (rsa)
+    eof {
+        exit
+    }
+
+    # error occurred, then exit
+    "ssh" {
+        exit
+    }
+}
+
+interact
+exit

@@ -2,4 +2,4 @@
 
 # hosts:
 # name rsa    ip port username rsapkeypath
-# name passwd ip port username password
+# name passwd ip port username password [noproxy | proxy1:proxy2]

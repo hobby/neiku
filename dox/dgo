@@ -36,22 +36,25 @@ if [ "$host" = "" ] ; then
 fi
 
 # load host config
-path=./doxrc_hosts
+hosts=./doxrc_hosts
 hname=
 htype=
 haddr=
 hport=
 huser=
 hpass=
-eval `grep -v -E '^#|^$' $path 2>/dev/null \
+hproxys=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null\
       | grep $host 2>/dev/null             \
       | head -n1                           \
       | awk '{printf "hname=%s; htype=%s;  \
                       haddr=%s; hport=%s;  \
-                      huser=%s; hpass=%s"  \
+                      huser=%s; hpass=%s;  \
+                      hproxys=%s;"         \
                      , $1, $2              \
                      , $3, $4              \
-                     , $5, $6}'`
+                     , $5, $6              \
+                     , $7}'`
 
 if [    -z "$hname" -o -z "$htype" \
      -o -z "$haddr" -o -z "$hport" \
@@ -65,18 +68,84 @@ fi
 dlog debug "load host config succ,"          \
            "hname:[$hname], htype:[$htype]," \
            "haddr:[$haddr], hport:[$hport]," \
-           "huser:[$huser], hpass:[$hpass]"
+           "huser:[$huser], hpass:[$hpass]," \
+           "hproxys:[$hproxys]"
 
 # login host via ssh without proxy
-case "$htype" in
-    rsa)
-        ssh -i $hpass -p $hport $huser@$haddr
-        ;;
-    passwd)
-        dssh $huser $hpass $haddr $hport
-        ;;
-    *)
-        echo "host type unsupported, type:[$htype]," \
-             "supported type:[rsa, passwd]"
-        ;;
-esac
+if [ -z "$hproxys" -o "$hproxys" = "noproxy" ] ; then
+    case "$htype" in
+        rsa)
+            ssh -i $hpass -p $hport $huser@$haddr
+            ;;
+        passwd)
+            dssh $huser $hpass $haddr $hport
+            ;;
+        *)
+            echo "host type unsupported, type:[$htype]," \
+                 "supported type:[rsa, passwd]"
+            ;;
+    esac
+    exit 0
+fi
+
+# login host via ssh with proxy
+hproxy1=
+hproxy2=
+eval `echo "$hproxys" | awk -F':' '{printf "hproxy1=%s; hproxy2=%s;"\
+                                           ,        $1,         $2}'`
+if [ -z "$hproxy1" ] ; then
+    dlog debug "hproxy1 is empty, hproxys:[$hproxys], hproxy2:[$hproxy2]"
+    hproxy1="$hproxy2"
+    hproxy2=
+fi
+if [ -z "$hproxy1" ] ; then
+    dlog error "check hproxys fail, hproxys:[$hproxys]"
+    exit 1
+fi
+dlog debug "hproxys:[$hproxys], hproxy1:[$hproxy1], hproxy2:[$hproxy2]"
+
+# host config for the first proxy
+hp1name=
+hp1type=
+hp1addr=
+hp1port=
+hp1user=
+hp1pass=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
+      | grep $hproxy1 2>/dev/null              \
+      | head -n1                               \
+      | awk '{printf "hp1name=%s; hp1type=%s;  \
+                      hp1addr=%s; hp1port=%s;  \
+                      hp1user=%s; hp1pass=%s"  \
+                     , $1, $2                  \
+                     , $3, $4                  \
+                     , $5, $6}'`
+
+if [    -z "$hp1name" -o -z "$hp1type" \
+     -o -z "$hp1addr" -o -z "$hp1port" \
+     -o -z "$hp1user" -o -z "$hp1pass" ] ; then
+    dlog error "check host config for proxy 1 fail,"      \
+               "hp1name:[$hp1name], hp1type:[$hp1type],"  \
+               "hp1addr:[$hp1addr], hp1port:[$hp1port],"  \
+               "hp1user:[$hp1user], hp1pass:[$hp1pass]"
+    exit 1
+fi
+dlog debug "load host config for proxy 1 succ,"          \
+           "hp1name:[$hp1name], hp1type:[$hp1type],"     \
+           "hp1addr:[$hp1addr], hp1port:[$hp1port],"     \
+           "hp1user:[$hp1user], hp1pass:[$hp1pass],"
+
+# only one proxy
+if [ -n "$hproxy1" -a -z "$hproxy2" ] ; then
+    # only support passwd's proxy/host config
+    if [ "$htype" != "passwd" -o "$hp1type" != "passwd" ] ; then
+        dlog error "host type not supported with proxy,"         \
+                   "host-type:[$htype], proxy1-type:[$hp1type]," \
+                   "supported type:[passwd]"
+        exit 1
+    fi
+
+    # using dssh1 to login host
+    dssh1 $hp1user $hp1pass $hp1addr $hp1port $huser $hpass $haddr $hport
+    exit 0
+fi
