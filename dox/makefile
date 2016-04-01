@@ -1,7 +1,7 @@
 
 output = dssh dgo \
          dlog \
-         dssh1 \
+         dssh1 dssh2 \
 
 prefix = ${HOME}
 

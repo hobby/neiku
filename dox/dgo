@@ -18,6 +18,8 @@
 #
 # VERSION
 #     2016/03/19: 支持(无跳板机)快速登录指定主机
+#     2016/03/20: 支持(1层跳板机)快速登录指定主机
+#     2016/04/01: 支持(2层跳板机)快速登录指定主机
 #
 ############################################################
 
@@ -149,3 +151,40 @@ if [ -n "$hproxy1" -a -z "$hproxy2" ] ; then
     dssh1 $hp1user $hp1pass $hp1addr $hp1port $huser $hpass $haddr $hport
     exit 0
 fi
+
+# host config for the second proxy
+hp2name=
+hp2type=
+hp2addr=
+hp2port=
+hp2user=
+hp2pass=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
+      | grep $hproxy2 2>/dev/null              \
+      | head -n1                               \
+      | awk '{printf "hp2name=%s; hp2type=%s;  \
+                      hp2addr=%s; hp2port=%s;  \
+                      hp2user=%s; hp2pass=%s"  \
+                     , $1, $2                  \
+                     , $3, $4                  \
+                     , $5, $6}'`
+
+if [    -z "$hp2name" -o -z "$hp2type" \
+     -o -z "$hp2addr" -o -z "$hp2port" \
+     -o -z "$hp2user" -o -z "$hp2pass" ] ; then
+    dlog error "check host config for proxy 2 fail,"      \
+               "hp2name:[$hp2name], hp2type:[$hp2type],"  \
+               "hp2addr:[$hp2addr], hp2port:[$hp2port],"  \
+               "hp2user:[$hp2user], hp2pass:[$hp2pass]"
+    exit 1
+fi
+dlog debug "load host config for proxy 2 succ,"          \
+           "hp2name:[$hp2name], hp2type:[$hp2type],"     \
+           "hp2addr:[$hp2addr], hp2port:[$hp2port],"     \
+           "hp2user:[$hp2user], hp2pass:[$hp2pass],"
+
+# using dssh2 to login host
+dssh2 $hp1user $hp1pass $hp1addr $hp1port \
+      $hp2user $hp2pass $hp2addr $hp2port \
+      $huser $hpass $haddr $hport
+exit 0
