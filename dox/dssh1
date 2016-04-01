@@ -4,10 +4,12 @@
 #######################################################################
 # NAME
 #     dssh1 - dox's ssh tool for login remote host with 1 proxy
+#             [ and run command ]
 #
 # SYNOPSIS
 #     dssh1 proxy_username proxy_password proxy_hostname proxy_hostport \
-#           remote_username remote_password remote_hostname remote_hostport
+#           remote_username remote_password remote_hostname remote_hostport \
+#           [ remote_command ]
 #
 # AUTHORS
 #     neiku project <ku7d@qq.com> 
@@ -19,6 +21,7 @@
 #
 # VERSION
 #     2016/03/20: 支持使用ssh+1层跳板机登录远程机器
+#     2016/04/01: 支持登录后执行一次命令，并马上退出
 #
 #######################################################################
 
@@ -34,17 +37,24 @@ set remote_password  "[lindex $argv 5]"
 set remote_hostname  "[lindex $argv 6]"
 set remote_hostport  "[lindex $argv 7]"
 
+# command to run on remote host
+set remote_command   "[lindex $argv 8]"
+
 # expect config
 set timeout -1
 
 if { $proxy_username == "" } {
     send_user "Usage: dssh1 proxy_username proxy_password porxy_hostname proxy_hostport\n"
     send_user "             remote_username remote_password remote_hostname remote_hostport\n"
+    send_user "             \[ remote_command \]\n"
     exit
 }
 
-send_user "ssh login to $remote_username@$remote_hostname via $proxy_username@$proxy_hostname\n"
-spawn -noecho ssh -t -p$proxy_hostport $proxy_username@$proxy_hostname ssh -p$remote_hostport $remote_username@$remote_hostname
+send_user "ssh login to $remote_username@$remote_hostname"
+send_user " via $proxy_username@$proxy_hostname"
+send_user " with command '$remote_command'\n"
+spawn -noecho ssh -t -p$proxy_hostport $proxy_username@$proxy_hostname \
+              ssh -p$remote_hostport $remote_username@$remote_hostname $remote_command
 
 # expect for proxy
 expect {

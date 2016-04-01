@@ -4,11 +4,13 @@
 #######################################################################
 # NAME
 #     dssh2 - dox's ssh tool for login remote host with 2 proxy
+#             [ and run command ]
 #
 # SYNOPSIS
 #     dssh2 proxy1_username proxy1_password proxy1_hostname proxy1_hostport \
 #           proxy2_username proxy2_password proxy2_hostname proxy2_hostport \
-#           remote_username remote_password remote_hostname remote_hostport
+#           remote_username remote_password remote_hostname remote_hostport \
+#           [ remote_command ]
 #
 # AUTHORS
 #     neiku project <ku7d@qq.com> 
@@ -20,6 +22,7 @@
 #
 # VERSION
 #     2016/04/01: 支持使用ssh+2层跳板机登录远程机器
+#                 支持登录后执行一次命令，并马上退出
 #
 #######################################################################
 
@@ -41,6 +44,9 @@ set remote_password  "[lindex $argv 9]"
 set remote_hostname  "[lindex $argv 10]"
 set remote_hostport  "[lindex $argv 11]"
 
+# command to run on remote host
+set remote_command   "[lindex $argv 12]"
+
 # expect config
 set timeout -1
 
@@ -48,14 +54,16 @@ if { $proxy1_username == "" } {
     send_user "Usage: dssh2 proxy1_username proxy1_password porxy_hostname proxy1_hostport\n"
     send_user "             proxy2_username proxy2_password porxy_hostname proxy2_hostport\n"
     send_user "             remote_username remote_password remote_hostname remote_hostport\n"
+    send_user "             \[ remote_command \]\n"
     exit
 }
 
 send_user "ssh login to $remote_username@$remote_hostname"
-send_user " via $proxy1_username@$proxy1_hostname and $proxy2_username@$proxy2_hostname\n"
+send_user " via $proxy1_username@$proxy1_hostname and $proxy2_username@$proxy2_hostname"
+send_user " with command '$remote_command'\n"
 spawn -noecho ssh -t -p$proxy1_hostport $proxy1_username@$proxy1_hostname \
               ssh -t -p$proxy2_hostport $proxy2_username@$proxy2_hostname \
-              ssh -p$remote_hostport $remote_username@$remote_hostname
+              ssh -p$remote_hostport $remote_username@$remote_hostname $remote_command
 
 # expect for proxy
 expect {
