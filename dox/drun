@@ -1,0 +1,211 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+############################################################
+# NAME
+#     drun - dox's tool for run command on remote host
+#
+# SYNOPSIS
+#     drun options... host
+#
+#     debug=on drun ...
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# SEE ALSO
+#     doxrc_hosts
+#
+# VERSION
+#     2016/04/02: 支持一次性执行普通命令
+#
+############################################################
+
+# help
+function help()
+{
+    echo "Usage: drun options... host"
+    echo "Options:"
+    echo "  -c, --cmd=<COMMAND> COMMAND to run on remote and exit."
+    echo "  -h, --help          Print this message and exit."
+    echo ""
+    echo "Report bugs to <ku7d@qq.com>"
+}
+
+# drun --cmd=<cmd> host
+cmdline_cmd=""
+cmdline_host=""
+
+# parse cmdline
+dlog debug "origin-args:[$@]"
+temp=$(getopt -o "c:h" --long "cmd:,help" -n "drun" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+dlog debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -c|--cmd) cmdline_cmd="$2" ;  shift 2 ;;
+        -h|--help) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+cmdline_host="$1"
+dlog debug "host:[$cmdline_host], cmd:[$cmdline_cmd]"
+
+# load host config
+hosts=./doxrc_hosts
+hname=
+htype=
+haddr=
+hport=
+huser=
+hpass=
+hproxys=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null\
+      | grep $cmdline_host 2>/dev/null             \
+      | head -n1                           \
+      | awk '{printf "hname=%s; htype=%s;  \
+                      haddr=%s; hport=%s;  \
+                      huser=%s; hpass=%s;  \
+                      hproxys=%s;"         \
+                     , $1, $2              \
+                     , $3, $4              \
+                     , $5, $6              \
+                     , $7}'`
+
+if [    -z "$hname" -o -z "$htype" \
+     -o -z "$haddr" -o -z "$hport" \
+     -o -z "$huser" -o -z "$hpass" ] ; then
+    dlog error "check host config fail,"         \
+               "hname:[$hname], htype:[$htype]," \
+               "haddr:[$haddr], hport:[$hport]," \
+               "huser:[$huser], hpass:[$hpass]"
+    exit 1
+fi
+dlog debug "load host config succ,"          \
+           "hname:[$hname], htype:[$htype]," \
+           "haddr:[$haddr], hport:[$hport]," \
+           "huser:[$huser], hpass:[$hpass]," \
+           "hproxys:[$hproxys]"
+
+# run command via ssh without proxy
+if [ -z "$hproxys" -o "$hproxys" = "noproxy" ] ; then
+    case "$htype" in
+        rsa)
+            ssh -i $hpass -p $hport $huser@$haddr "$cmdline_cmd"
+            ;;
+        passwd)
+            dssh $huser $hpass $haddr $hport "$cmdline_cmd"
+            ;;
+        *)
+            echo "host type unsupported, type:[$htype]," \
+                 "supported type:[rsa, passwd]"
+            ;;
+    esac
+    exit 0
+fi
+
+# run command via ssh with proxy
+hproxy1=
+hproxy2=
+eval `echo "$hproxys" | awk -F':' '{printf "hproxy1=%s; hproxy2=%s;"\
+                                           ,        $1,         $2}'`
+if [ -z "$hproxy1" ] ; then
+    dlog debug "hproxy1 is empty, hproxys:[$hproxys], hproxy2:[$hproxy2]"
+    hproxy1="$hproxy2"
+    hproxy2=
+fi
+if [ -z "$hproxy1" ] ; then
+    dlog error "check hproxys fail, hproxys:[$hproxys]"
+    exit 1
+fi
+dlog debug "hproxys:[$hproxys], hproxy1:[$hproxy1], hproxy2:[$hproxy2]"
+
+# host config for the first proxy
+hp1name=
+hp1type=
+hp1addr=
+hp1port=
+hp1user=
+hp1pass=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
+      | grep $hproxy1 2>/dev/null              \
+      | head -n1                               \
+      | awk '{printf "hp1name=%s; hp1type=%s;  \
+                      hp1addr=%s; hp1port=%s;  \
+                      hp1user=%s; hp1pass=%s"  \
+                     , $1, $2                  \
+                     , $3, $4                  \
+                     , $5, $6}'`
+
+if [    -z "$hp1name" -o -z "$hp1type" \
+     -o -z "$hp1addr" -o -z "$hp1port" \
+     -o -z "$hp1user" -o -z "$hp1pass" ] ; then
+    dlog error "check host config for proxy 1 fail,"      \
+               "hp1name:[$hp1name], hp1type:[$hp1type],"  \
+               "hp1addr:[$hp1addr], hp1port:[$hp1port],"  \
+               "hp1user:[$hp1user], hp1pass:[$hp1pass]"
+    exit 1
+fi
+dlog debug "load host config for proxy 1 succ,"          \
+           "hp1name:[$hp1name], hp1type:[$hp1type],"     \
+           "hp1addr:[$hp1addr], hp1port:[$hp1port],"     \
+           "hp1user:[$hp1user], hp1pass:[$hp1pass],"
+
+# only one proxy
+if [ -n "$hproxy1" -a -z "$hproxy2" ] ; then
+    # only support passwd's proxy/host config
+    if [ "$htype" != "passwd" -o "$hp1type" != "passwd" ] ; then
+        dlog error "host type not supported with proxy,"         \
+                   "host-type:[$htype], proxy1-type:[$hp1type]," \
+                   "supported type:[passwd]"
+        exit 1
+    fi
+
+    # using dssh1 to run command
+    dssh1 $hp1user $hp1pass $hp1addr $hp1port \
+          $huser $hpass $haddr $hport "$cmdline_cmd"
+    exit 0
+fi
+
+# host config for the second proxy
+hp2name=
+hp2type=
+hp2addr=
+hp2port=
+hp2user=
+hp2pass=
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
+      | grep $hproxy2 2>/dev/null              \
+      | head -n1                               \
+      | awk '{printf "hp2name=%s; hp2type=%s;  \
+                      hp2addr=%s; hp2port=%s;  \
+                      hp2user=%s; hp2pass=%s"  \
+                     , $1, $2                  \
+                     , $3, $4                  \
+                     , $5, $6}'`
+
+if [    -z "$hp2name" -o -z "$hp2type" \
+     -o -z "$hp2addr" -o -z "$hp2port" \
+     -o -z "$hp2user" -o -z "$hp2pass" ] ; then
+    dlog error "check host config for proxy 2 fail,"      \
+               "hp2name:[$hp2name], hp2type:[$hp2type],"  \
+               "hp2addr:[$hp2addr], hp2port:[$hp2port],"  \
+               "hp2user:[$hp2user], hp2pass:[$hp2pass]"
+    exit 1
+fi
+dlog debug "load host config for proxy 2 succ,"          \
+           "hp2name:[$hp2name], hp2type:[$hp2type],"     \
+           "hp2addr:[$hp2addr], hp2port:[$hp2port],"     \
+           "hp2user:[$hp2user], hp2pass:[$hp2pass],"
+
+# using dssh2 to run command
+dssh2 $hp1user $hp1pass $hp1addr $hp1port \
+      $hp2user $hp2pass $hp2addr $hp2port \
+      $huser $hpass $haddr $hport "$cmdline_cmd"
+exit 0
