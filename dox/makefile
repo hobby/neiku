@@ -3,6 +3,7 @@ output = dssh dgo \
          dlog \
          dssh1 dssh2 \
          drun \
+         dsshL \
 
 prefix = ${HOME}
 

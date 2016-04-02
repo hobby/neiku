@@ -1,0 +1,118 @@
+#!/usr/bin/expect --
+# vim:ts=4:sw=4:expandtab
+
+#######################################################################
+# NAME
+#     dsshL - dox's ssh tool for make local tcp forwarding
+#
+# SYNOPSIS
+#     dsshL proxy_username proxy_password proxy_hostname proxy_hostport \
+#           remote_hostname remote_hostport \
+#           local_listen [ extra_config ]
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com> 
+#
+# SEE ALSO
+#     dfw
+#     ssh
+#     expect --help
+#
+# VERSION
+#     2016/04/03: 支持使用ssh穿透proxy机将remote机端口映射到本地端口
+#
+#######################################################################
+
+# proxy host config
+set proxy_username   "[lindex $argv 0]"
+set proxy_password   "[lindex $argv 1]"
+set proxy_hostname   "[lindex $argv 2]"
+set proxy_hostport   "[lindex $argv 3]"
+
+# remote host config
+set remote_hostname  "[lindex $argv 4]"
+set remote_hostport  "[lindex $argv 5]"
+
+# local config
+set local_listen     "[lindex $argv 6]"
+
+# extra config, ps:
+# for set timeout(us/ms): usleep 10000 # 10ms
+# for set timeout(s): sleep 5 # 5s
+# for no  timeout: -N
+set extra_config     "[lindex $argv 7]"
+
+set timeout -1
+
+if { $proxy_username == "" } {
+    send_user "Usage: dsshL proxy_username proxy_password porxy_hostname proxy_hostport\n"
+    send_user "             remote_hostname remote_hostport\n"
+    send_user "             local_listen \[ extra_config {-N | sleep 10}\]\n"
+    send_user ""
+    exit
+}
+
+if { $extra_config == "" } {
+    set extra_config "-N"
+}
+
+# no -f here, using expect to fork a daemon to wait ssh
+# and password authentication only
+spawn -noecho ssh -o PubkeyAuthentication=no \
+                  -L $local_listen:$remote_hostname:$remote_hostport \
+                     $proxy_username@$proxy_hostname -p$proxy_hostport \
+                     $extra_config
+send_user "pid=[exp_pid]\n"
+expect {
+    # say 'yes' for the first connection (passwd)
+    "(yes/no)?" {
+        send "yes\r"
+
+        # now ask for password
+        expect "password:"
+        send "$proxy_password\r"
+
+        # wait ssh exit
+        if {[fork] != 0} {
+            # parent expect, just exit
+            exit
+        }
+        # child expect, just wait
+        disconnect
+        expect eof
+        exit
+    }
+
+    # ask for password on non-first connection (passwd)
+    "password:" {
+        send "$proxy_password\r"
+
+        # wait ssh exit
+        if {[fork] != 0} {
+            # parent expect, just exit
+            exit
+        }
+        # child expect, just wait
+        disconnect
+        expect eof
+        exit
+    }
+
+    # for login shell (rsa), \\$ is special for rsa/passwd
+    -re "#|>|\\$" {
+        interact
+        exit
+    }
+
+    # for exit (rsa)
+    eof {
+        exit
+    }
+
+    # error occurred, then exit
+    "ssh" {
+        exit
+    }
+}
+
+exit
