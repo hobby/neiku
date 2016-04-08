@@ -18,6 +18,7 @@
 #
 # VERSION
 #     2016/04/08: 支持基于dsshL的多重主机穿透(本地端口映射)
+#                 支持穿透每层主机后等待50ms，以保证可以继续
 #
 ############################################################
 
@@ -172,4 +173,7 @@ do
 
     # current host become proxy host
     prehost=$host
+
+    # wait a moment (50ms)
+    usleep 50000
 done || { exit 1; }
