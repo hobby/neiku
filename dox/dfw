@@ -1,0 +1,175 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+############################################################
+# NAME
+#     dfw - dox's tool for make tcp forwarding to remote host
+#
+# SYNOPSIS
+#     dfw options... host
+#
+#     debug=on dfw ...
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# SEE ALSO
+#     doxrc_hosts
+#
+# VERSION
+#     2016/04/08: 支持基于dsshL的多重主机穿透(本地端口映射)
+#
+############################################################
+
+# help
+function help()
+{
+    echo "Usage: drun options... host"
+    echo "Options:"
+    echo "  -h, --help          Print this message and exit."
+    echo ""
+    echo "Report bugs to <ku7d@qq.com>"
+}
+
+# dfw host
+cmdline_host=""
+
+# parse cmdline
+dlog debug "origin-args:[$@]"
+temp=$(getopt -o "h" --long "help" -n "dfw" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+dlog debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -h|--help) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+cmdline_host="$1"
+if [ -z "$cmdline_host" ] ; then
+    dlog error "check host fail, host:[$cmdline_host]"
+    exit 1
+fi
+dlog debug "host:[$cmdline_host]"
+
+# load host config
+hosts=./doxrc_hosts
+hname=; htype=; haddr=; hport=; huser=; hpass=; hproxys=;
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null\
+      | grep $cmdline_host 2>/dev/null     \
+      | head -n1                           \
+      | awk '{printf "hname=%s; htype=%s;  \
+                      haddr=%s; hport=%s;  \
+                      huser=%s; hpass=%s;  \
+                      hproxys=%s;"         \
+                     , $1, $2              \
+                     , $3, $4              \
+                     , $5, $6              \
+                     , $7}'`
+
+if [    -z "$hname" -o -z "$htype" \
+     -o -z "$haddr" -o -z "$hport" \
+     -o -z "$huser" -o -z "$hpass" ] ; then
+    dlog error "check host config fail,"         \
+               "hname:[$hname], htype:[$htype]," \
+               "haddr:[$haddr], hport:[$hport]," \
+               "huser:[$huser], hpass:[$hpass]"
+    exit 1
+fi
+dlog debug "load host config succ,"          \
+           "hname:[$hname], htype:[$htype]," \
+           "haddr:[$haddr], hport:[$hport]," \
+           "huser:[$huser], hpass:[$hpass]," \
+           "hproxys:[$hproxys]"
+
+# no tcp forwarding for noproxy-host
+if [ -z "$hproxys" -o "$hproxys" = "noproxy" ] ; then
+    echo $haddr:$hport
+    exit 0
+fi
+
+prehost=""
+allhost="$hproxys:$cmdline_host"
+listen_addr=""
+listen_port=""
+dlog debug "making tcp forwarding, host:[$cmdline_host]," \
+           "proxys:[$hproxys], allhost:[$allhost]"
+echo "$allhost" | tr ':' '\n' | while read host
+do
+    if [ -z "$listen_addr" ] ; then
+        listen="`dfw $host 2>/dev/null`"
+        if [ $? != 0 ] ; then
+            dlog error "dfw fail, host:[$host]"
+            break
+        fi
+        listen_addr="`echo $listen | tail -n1 | cut -d: -f1`"
+        listen_port="`echo $listen | tail -n1 | cut -d: -f2`"
+        dlog debug "dfw succ, host:[$host], listen:[$listen]," \
+                   "addr:[$listen_addr], port:[$listen_port]"
+        echo $listen_addr:$listen_port
+
+        prehost=$host
+        continue
+    fi
+
+    # load host config for proxy
+    hpname=; hptype=; hpaddr=; hpport=; hpuser=; hppass=;
+    eval `grep -v -E '^#|^$' $hosts 2>/dev/null      \
+          | grep $prehost 2>/dev/null                \
+          | head -n1                                 \
+          | awk '{printf "hpname=%s; hptype=%s;      \
+                          hpaddr=%s; hpport=%s;      \
+                          hpuser=%s; hppass=%s"      \
+                         , $1, $2                    \
+                         , $3, $4                    \
+                         , $5, $6}'`
+    dlog debug "load prehost '$prehost' config succ,"\
+               "hpname:[$hpname], hptype:[$hptype]," \
+               "hpaddr:[$hpaddr], hpport:[$hpport]," \
+               "hpuser:[$hpuser], hppass:[$hppass]"
+
+    # load host config for tcp-forwarding
+    hfname=; hftype=; hfaddr=; hfport=; hfuser=; hfpass=;
+    eval `grep -v -E '^#|^$' $hosts 2>/dev/null      \
+          | grep $host 2>/dev/null                   \
+          | head -n1                                 \
+          | awk '{printf "hfname=%s; hftype=%s;      \
+                          hfaddr=%s; hfport=%s;      \
+                          hfuser=%s; hfpass=%s"      \
+                         , $1, $2                    \
+                         , $3, $4                    \
+                         , $5, $6}'`
+    dlog debug "load host '$host' config succ,"      \
+               "hfname:[$hfname], hftype:[$hftype]," \
+               "hfaddr:[$hfaddr], hfport:[$hfport]," \
+               "hfuser:[$hfuser], hfpass:[$hfpass]"
+
+    # random port for tcp-forwarding
+    port=$(($(ss -at4n | awk '{print $4}' \
+              | cut -d: -f2 | sort -nu | tail -n1) + 1))
+    if [ "$port" -lt 1024 ] ; then
+        port=$((port + 50000))
+    fi
+
+    # make tcp-forwarding
+    dsshL $hpuser $hppass $listen_addr $listen_port \
+          $hfaddr $hfport \
+          $port "sleep 10" >/dev/null 2>&1
+    if [ $? != 0 ] ; then
+        dlog error "make tcp forwarding fail," \
+                   "proxy-host:[$prehost], remote-host:[$host]"
+        exit 1
+    fi
+    listen_addr=127.0.0.1
+    listen_port=$port
+    echo $listen_addr:$listen_port
+
+    # current host become proxy host
+    prehost=$host
+done || { exit 1; }
