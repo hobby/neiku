@@ -19,6 +19,7 @@
 # VERSION
 #     2016/04/08: 支持基于dsshL的多重主机穿透(本地端口映射)
 #                 支持穿透每层主机后等待50ms，以保证可以继续
+#     2016/04/09: 支持基于RSA验证方式的主机穿透
 #
 ############################################################
 
@@ -159,14 +160,32 @@ do
     fi
 
     # make tcp-forwarding
-    dsshL $hpuser $hppass $listen_addr $listen_port \
-          $hfaddr $hfport \
-          $port "sleep 10" >/dev/null 2>&1
-    if [ $? != 0 ] ; then
-        dlog error "make tcp forwarding fail," \
-                   "proxy-host:[$prehost], remote-host:[$host]"
-        exit 1
-    fi
+    case "$hptype" in
+        rsa)
+            ssh -o PasswordAuthentication=no \
+                -L $port:$hfaddr:$hfport $hpuser@$listen_addr \
+                -p $listen_port -i $hppass -f "sleep 10"
+            if [ $? != 0 ] ; then
+                dlog error "make tcp forwarding fail(rsa proxy)," \
+                           "proxy-host:[$prehost], remote-host:[$host]"
+                exit 1
+            fi
+            ;;
+        passwd)
+            dsshL $hpuser $hppass $listen_addr $listen_port \
+                  $hfaddr $hfport \
+                  $port "sleep 10" >/dev/null 2>&1
+            if [ $? != 0 ] ; then
+                dlog error "make tcp forwarding fail(passwd proxy)," \
+                           "proxy-host:[$prehost], remote-host:[$host]"
+                exit 1
+            fi
+            ;;
+        *)
+            dlog error "host type unsupported, type:[$hptype]," \
+                       "supported type:[rsa, passwd]"
+            ;;
+    esac
     listen_addr=127.0.0.1
     listen_port=$port
     echo $listen_addr:$listen_port
