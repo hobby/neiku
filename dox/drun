@@ -6,7 +6,7 @@
 #     drun - dox's tool for run command on remote host
 #
 # SYNOPSIS
-#     drun options... host
+#     drun [ options ] host
 #
 #     debug=on drun ...
 #
@@ -17,14 +17,16 @@
 #     doxrc_hosts
 #
 # VERSION
-#     2016/04/02: 支持一次性执行普通命令
+#     2016/04/02: 支持一次性执行普通命令(passwd)
+#     2016/04/10: 支持基于dfw实现穿透N层跳板机执行一次性命令
+#                 (支持rsa/passwd验证方式)
 #
 ############################################################
 
 # help
 function help()
 {
-    echo "Usage: drun options... host"
+    echo "Usage: drun [ options ] host"
     echo "Options:"
     echo "  -c, --cmd=<COMMAND> COMMAND to run on remote and exit."
     echo "  -h, --help          Print this message and exit."
@@ -58,14 +60,9 @@ cmdline_host="$1"
 dlog debug "host:[$cmdline_host], cmd:[$cmdline_cmd]"
 
 # load host config
+host=$cmdline_host
 hosts=./doxrc_hosts
-hname=
-htype=
-haddr=
-hport=
-huser=
-hpass=
-hproxys=
+hname=; htype=; haddr=; hport=; huser=; hpass=; hproxys=;
 eval `grep -v -E '^#|^$' $hosts 2>/dev/null\
       | grep $cmdline_host 2>/dev/null             \
       | head -n1                           \
@@ -93,119 +90,32 @@ dlog debug "load host config succ,"          \
            "huser:[$huser], hpass:[$hpass]," \
            "hproxys:[$hproxys]"
 
-# run command via ssh without proxy
-if [ -z "$hproxys" -o "$hproxys" = "noproxy" ] ; then
-    case "$htype" in
-        rsa)
-            ssh -i $hpass -p $hport $huser@$haddr "$cmdline_cmd"
-            ;;
-        passwd)
-            dssh $huser $hpass $haddr $hport "$cmdline_cmd"
-            ;;
-        *)
-            echo "host type unsupported, type:[$htype]," \
-                 "supported type:[rsa, passwd]"
-            ;;
-    esac
-    exit 0
-fi
-
-# run command via ssh with proxy
-hproxy1=
-hproxy2=
-eval `echo "$hproxys" | awk -F':' '{printf "hproxy1=%s; hproxy2=%s;"\
-                                           ,        $1,         $2}'`
-if [ -z "$hproxy1" ] ; then
-    dlog debug "hproxy1 is empty, hproxys:[$hproxys], hproxy2:[$hproxy2]"
-    hproxy1="$hproxy2"
-    hproxy2=
-fi
-if [ -z "$hproxy1" ] ; then
-    dlog error "check hproxys fail, hproxys:[$hproxys]"
+# make tcp forwarding with dfw
+tmp=/tmp/.doxtmp_$USER.$RANDOM
+dfw --verbose $host > $tmp
+if [ $? != 0 ] ; then
+    dlog error "dfw fail, host:[$host]"
+    rm -f $tmp
     exit 1
 fi
-dlog debug "hproxys:[$hproxys], hproxy1:[$hproxy1], hproxy2:[$hproxy2]"
+llist="`cat $tmp`"
+laddr="`echo "$llist" | tail -n1 | cut -d: -f1`"
+lport="`echo "$llist" | tail -n1 | cut -d: -f2`"
+dlog debug "dfw succ, host:[$host], tmpfile:[$tmp]," \
+           ", llist:[$llist], laddr:[$laddr], lport:[$lport]"
+rm -f $tmp
 
-# host config for the first proxy
-hp1name=
-hp1type=
-hp1addr=
-hp1port=
-hp1user=
-hp1pass=
-eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
-      | grep $hproxy1 2>/dev/null              \
-      | head -n1                               \
-      | awk '{printf "hp1name=%s; hp1type=%s;  \
-                      hp1addr=%s; hp1port=%s;  \
-                      hp1user=%s; hp1pass=%s"  \
-                     , $1, $2                  \
-                     , $3, $4                  \
-                     , $5, $6}'`
-
-if [    -z "$hp1name" -o -z "$hp1type" \
-     -o -z "$hp1addr" -o -z "$hp1port" \
-     -o -z "$hp1user" -o -z "$hp1pass" ] ; then
-    dlog error "check host config for proxy 1 fail,"      \
-               "hp1name:[$hp1name], hp1type:[$hp1type],"  \
-               "hp1addr:[$hp1addr], hp1port:[$hp1port],"  \
-               "hp1user:[$hp1user], hp1pass:[$hp1pass]"
-    exit 1
-fi
-dlog debug "load host config for proxy 1 succ,"          \
-           "hp1name:[$hp1name], hp1type:[$hp1type],"     \
-           "hp1addr:[$hp1addr], hp1port:[$hp1port],"     \
-           "hp1user:[$hp1user], hp1pass:[$hp1pass],"
-
-# only one proxy
-if [ -n "$hproxy1" -a -z "$hproxy2" ] ; then
-    # only support passwd's proxy/host config
-    if [ "$htype" != "passwd" -o "$hp1type" != "passwd" ] ; then
-        dlog error "host type not supported with proxy,"         \
-                   "host-type:[$htype], proxy1-type:[$hp1type]," \
-                   "supported type:[passwd]"
-        exit 1
-    fi
-
-    # using dssh1 to run command
-    dssh1 $hp1user $hp1pass $hp1addr $hp1port \
-          $huser $hpass $haddr $hport "$cmdline_cmd"
-    exit 0
-fi
-
-# host config for the second proxy
-hp2name=
-hp2type=
-hp2addr=
-hp2port=
-hp2user=
-hp2pass=
-eval `grep -v -E '^#|^$' $hosts 2>/dev/null    \
-      | grep $hproxy2 2>/dev/null              \
-      | head -n1                               \
-      | awk '{printf "hp2name=%s; hp2type=%s;  \
-                      hp2addr=%s; hp2port=%s;  \
-                      hp2user=%s; hp2pass=%s"  \
-                     , $1, $2                  \
-                     , $3, $4                  \
-                     , $5, $6}'`
-
-if [    -z "$hp2name" -o -z "$hp2type" \
-     -o -z "$hp2addr" -o -z "$hp2port" \
-     -o -z "$hp2user" -o -z "$hp2pass" ] ; then
-    dlog error "check host config for proxy 2 fail,"      \
-               "hp2name:[$hp2name], hp2type:[$hp2type],"  \
-               "hp2addr:[$hp2addr], hp2port:[$hp2port],"  \
-               "hp2user:[$hp2user], hp2pass:[$hp2pass]"
-    exit 1
-fi
-dlog debug "load host config for proxy 2 succ,"          \
-           "hp2name:[$hp2name], hp2type:[$hp2type],"     \
-           "hp2addr:[$hp2addr], hp2port:[$hp2port],"     \
-           "hp2user:[$hp2user], hp2pass:[$hp2pass],"
-
-# using dssh2 to run command
-dssh2 $hp1user $hp1pass $hp1addr $hp1port \
-      $hp2user $hp2pass $hp2addr $hp2port \
-      $huser $hpass $haddr $hport "$cmdline_cmd"
-exit 0
+# run command
+case "$htype" in
+    rsa)
+        ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no \
+            -i $hpass -p $lport $huser@$laddr "$cmdline_cmd"
+        ;;
+    passwd)
+        dssh $huser $hpass $laddr $lport "$cmdline_cmd"
+        ;;
+    *)
+        echo "host type unsupported, type:[$htype]," \
+             "supported type:[rsa, passwd]"
+        ;;
+esac
