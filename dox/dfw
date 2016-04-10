@@ -20,25 +20,29 @@
 #     2016/04/08: 支持基于dsshL的多重主机穿透(本地端口映射)
 #                 支持穿透每层主机后等待50ms，以保证可以继续
 #     2016/04/09: 支持基于RSA验证方式的主机穿透
+#     2016/04/10: 支持隐藏RSA验证过程中yes/no人机交互过程
+#                 支持verbose模式将穿透进度重定向到stderr设备
 #
 ############################################################
 
 # help
 function help()
 {
-    echo "Usage: drun options... host"
+    echo "Usage: drun [options...] host"
     echo "Options:"
     echo "  -h, --help          Print this message and exit."
+    echo "  -v, --verbose       Make the operation more talkative."
     echo ""
     echo "Report bugs to <ku7d@qq.com>"
 }
 
-# dfw host
+# dfw [options...] host
 cmdline_host=""
+cmdline_verbose="no"
 
 # parse cmdline
 dlog debug "origin-args:[$@]"
-temp=$(getopt -o "h" --long "help" -n "dfw" -- "$@")
+temp=$(getopt -o "hv" --long "help,verbose" -n "dfw" -- "$@")
 if [ $? != 0 ] ; then
     echo "`help`" >&2
     exit 1
@@ -49,6 +53,7 @@ while true
 do
     case "$1" in
         -h|--help) echo "`help`" >&2; exit 0;;
+        -v|--verbose) cmdline_verbose="yes"; shift ;;
         --) shift ; break ;;
         *)  echo "parse options error!" >&2 ; exit 1 ;;
     esac
@@ -93,28 +98,36 @@ dlog debug "load host config succ,"          \
 # no tcp forwarding for noproxy-host
 if [ -z "$hproxys" -o "$hproxys" = "noproxy" ] ; then
     echo $haddr:$hport
+    if [ "$cmdline_verbose" = "yes" ] ; then
+        echo "tcp forwarding for $cmdline_host ok," \
+             "listen at $haddr:$hport" >&2
+    fi
     exit 0
 fi
 
 prehost=""
 allhost="$hproxys:$cmdline_host"
-listen_addr=""
-listen_port=""
+laddr=""
+lport=""
 dlog debug "making tcp forwarding, host:[$cmdline_host]," \
            "proxys:[$hproxys], allhost:[$allhost]"
 echo "$allhost" | tr ':' '\n' | while read host
 do
-    if [ -z "$listen_addr" ] ; then
+    if [ -z "$laddr" ] ; then
         listen="`dfw $host 2>/dev/null`"
         if [ $? != 0 ] ; then
             dlog error "dfw fail, host:[$host]"
             break
         fi
-        listen_addr="`echo $listen | tail -n1 | cut -d: -f1`"
-        listen_port="`echo $listen | tail -n1 | cut -d: -f2`"
+        laddr="`echo $listen | tail -n1 | cut -d: -f1`"
+        lport="`echo $listen | tail -n1 | cut -d: -f2`"
         dlog debug "dfw succ, host:[$host], listen:[$listen]," \
-                   "addr:[$listen_addr], port:[$listen_port]"
-        echo $listen_addr:$listen_port
+                   "addr:[$laddr], port:[$lport]"
+        echo $laddr:$lport
+        if [ "$cmdline_verbose" = "yes" ] ; then
+            echo "tcp forwarding for $host ok," \
+                 "listen at $laddr:$lport" >&2
+        fi
 
         prehost=$host
         continue
@@ -162,9 +175,9 @@ do
     # make tcp-forwarding
     case "$hptype" in
         rsa)
-            ssh -o PasswordAuthentication=no \
-                -L $port:$hfaddr:$hfport $hpuser@$listen_addr \
-                -p $listen_port -i $hppass -f "sleep 10"
+            ssh -o PasswordAuthentication=no -o StrictHostKeyChecking=no \
+                -L $port:$hfaddr:$hfport $hpuser@$laddr \
+                -p $lport -q -i $hppass -f "sleep 10"
             if [ $? != 0 ] ; then
                 dlog error "make tcp forwarding fail(rsa proxy)," \
                            "proxy-host:[$prehost], remote-host:[$host]"
@@ -172,7 +185,7 @@ do
             fi
             ;;
         passwd)
-            dsshL $hpuser $hppass $listen_addr $listen_port \
+            dsshL $hpuser $hppass $laddr $lport \
                   $hfaddr $hfport \
                   $port "sleep 10" >/dev/null 2>&1
             if [ $? != 0 ] ; then
@@ -186,9 +199,13 @@ do
                        "supported type:[rsa, passwd]"
             ;;
     esac
-    listen_addr=127.0.0.1
-    listen_port=$port
-    echo $listen_addr:$listen_port
+    laddr=127.0.0.1
+    lport=$port
+    echo $laddr:$lport
+    if [ "$cmdline_verbose" = "yes" ] ; then
+        echo "tcp forwarding for $host ok," \
+             "listen at $laddr:$lport" >&2
+    fi
 
     # current host become proxy host
     prehost=$host
