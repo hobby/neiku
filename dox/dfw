@@ -22,6 +22,8 @@
 #     2016/04/09: 支持基于RSA验证方式的主机穿透
 #     2016/04/10: 支持隐藏RSA验证过程中yes/no人机交互过程
 #                 支持verbose模式将穿透进度重定向到stderr设备
+#     2016/05/08: 支持同步等待端口映射完成(定时检测)
+#                 (提高端口映射成功率)
 #
 ############################################################
 
@@ -207,9 +209,26 @@ do
              "listen at $laddr:$lport" >&2
     fi
 
-    # current host become proxy host
+    # current host become next proxy host
     prehost=$host
 
-    # wait a moment (50ms)
-    usleep 50000
+    # wait with progress until ok
+    iswait="false"
+    while true
+    do
+        ok="$(ss -ltn -4 | grep -w $laddr:$lport | wc -l)"
+        if [ "$ok" = "1" ] ; then
+            break
+        fi
+
+        iswait="true"
+        if [ "$cmdline_verbose" = "yes" ] ; then
+            echo -n "#" >&2
+        fi
+        usleep 50000
+    done
+    if [ "$iswait" = "true" -a "$cmdline_verbose" = "yes" ] ; then
+        echo >&2
+    fi
+
 done || { exit 1; }
