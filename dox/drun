@@ -20,6 +20,7 @@
 #     2016/04/02: 支持一次性执行普通命令(passwd)
 #     2016/04/10: 支持基于dfw实现穿透N层跳板机执行一次性命令
 #                 (支持rsa/passwd验证方式)
+#     2016/05/10: 支持通过环境变量传递password，提高安全
 #
 ############################################################
 
@@ -112,7 +113,8 @@ case "$htype" in
             -i $hpass -p $lport $huser@$laddr "$cmdline_cmd"
         ;;
     passwd)
-        dssh $huser $hpass $laddr $lport "$cmdline_cmd"
+        DOX_DSSH_PASSWORD="$hpass" \
+        dssh $huser "" $laddr $lport "$cmdline_cmd"
         ;;
     *)
         echo "host type unsupported, type:[$htype]," \

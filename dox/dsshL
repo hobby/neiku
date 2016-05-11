@@ -21,6 +21,7 @@
 # VERSION
 #     2016/04/03: 支持使用ssh穿透proxy机将remote机端口映射到本地端口
 #     2016/04/08: 支持ssh出现异常时，正确地异常退出
+#     2016/05/10: 支持通过环境变量传递password，提高安全
 #
 #######################################################################
 
@@ -55,6 +56,13 @@ if { $proxy_username == "" } {
 
 if { $extra_config == "" } {
     set extra_config "-N"
+}
+
+if { $proxy_password == "" } {
+    # when DOX_DSSHL_PROXYPASSWORD not exist
+    # expect will throw expection (to exit)
+    # now we catch and ignore it (proxy_password still empty)
+    catch { set proxy_password "$env(DOX_DSSHL_PROXYPASSWORD)" }
 }
 
 # no -f here, using expect to fork a daemon to wait ssh

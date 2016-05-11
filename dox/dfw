@@ -24,6 +24,7 @@
 #                 支持verbose模式将穿透进度重定向到stderr设备
 #     2016/05/08: 支持同步等待端口映射完成(定时检测)
 #                 (提高端口映射成功率)
+#     2016/05/10: 支持通过环境变量传递password，提高安全
 #
 ############################################################
 
@@ -187,7 +188,8 @@ do
             fi
             ;;
         passwd)
-            dsshL $hpuser $hppass $laddr $lport \
+            DOX_DSSHL_PROXYPASSWORD="$hppass" \
+            dsshL $hpuser "" $laddr $lport \
                   $hfaddr $hfport \
                   $port "sleep 10" >/dev/null 2>&1
             if [ $? != 0 ] ; then

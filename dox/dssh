@@ -21,6 +21,7 @@
 #     2016/03/19: 支持使用ssh(无跳板机)登录远程机器
 #     2016/04/01: 支持登录后执行一次命令，并马上退出
 #     2016/04/10: 支持ssh出现异常时，正确地异常退出
+#     2016/05/10: 支持通过环境变量传递password，提高安全
 #
 #######################################################################
 
@@ -34,6 +35,13 @@ set timeout  -1
 if { $username == "" } {
     send_user "Usage: dssh username password hostname hostport \[ command \]\n"
     exit
+}
+
+if { $password == "" } {
+    # when DOX_DSSH_PASSWORD not exist
+    # expect will throw expection (to exit)
+    # now we catch and ignore it (password still empty)
+    catch { set password "$env(DOX_DSSH_PASSWORD)" }
 }
 
 spawn -noecho ssh -p$hostport $username@$hostname $command

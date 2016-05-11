@@ -22,6 +22,7 @@
 #     2016/04/01: 支持(2层跳板机)快速登录指定主机(passwd)
 #     2016/04/10: 支持基于dfw实现N层跳板机快速登录指定主机
 #                 支持rsa/passwd登录验证方式
+#     2016/05/10: 支持通过环境变量传递password，提高安全
 #
 ############################################################
 
@@ -91,7 +92,8 @@ case "$htype" in
             -i $hpass -q -p $lport $huser@$laddr
         ;;
     passwd)
-        dssh $huser $hpass $laddr $lport
+        DOX_DSSH_PASSWORD="$hpass" \
+        dssh $huser "" $laddr $lport
         ;;
     *)
         dlog error "host type unsupported, type:[$htype]," \
