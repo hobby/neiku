@@ -10,19 +10,27 @@
 #ifndef __TIME_H__
 #define __TIME_H__
 
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
+#include <time.h>
+#include <string>
 
 namespace neiku
 {
 namespace util
 {
 
+// x86_64: time_t => long unsigned int (uint64_t)
+
 // 获取毫秒时间戳
-uint64_t timems();
+time_t timems();
 
 // 获取微秒时间戳
-uint64_t timeus();
+time_t timeus();
+
+// 秒时间戳转时间串
+std::string timestr(time_t sec, const char* fmt);
+
+// 时间串转秒时间戳
+time_t timestamp(const char* str, const char* fmt);
 
 };
 };
