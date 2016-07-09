@@ -47,6 +47,8 @@
  *             当M>1时，最新日志总在filename.log中，越旧的日志按index=[1,M-1]存储，文件名为
  *             filename{index}.log，index越大，意味着日志越旧(方便扩充)
  *             注意：文件大小默认限制20MB，个数限制20个
+ *        v17: 支持区分suseconds_t的实际打印格式串，osx平台是int，linux是long int
+ *             osx平台使用stat而不是stat64
  * usage:
  *       #include <neiku/log.h>
  *
@@ -99,6 +101,13 @@
 namespace neiku
 {
 
+// stat64在osx里面使用stat替代了
+#if defined (__APPLE__) || defined (__MACH__)
+    #define STAT64 stat
+#else
+    #define STAT64 stat64
+#endif
+
 class CLog
 {
     public:
@@ -137,8 +146,8 @@ class CLog
             m_sNoLogFilePath.append(".nolog");
 
             // 可能缺少中间目录，自动创建之
-            struct stat64 st64;
-            if (stat64(m_sLogFilePath.c_str(), &st64) != 0)
+            struct STAT64 st64;
+            if (STAT64(m_sLogFilePath.c_str(), &st64) != 0)
             {
                 MakeSubDir(m_sLogFilePath.c_str());
             }
@@ -208,8 +217,8 @@ class CLog
             if (m_bLog2File == true)
             {
                 // 外部没有关闭日志，继续输出
-                struct stat64 st64;
-                if (stat64(m_sNoLogFilePath.c_str(), &st64) != 0)
+                struct STAT64 st64;
+                if (STAT64(m_sNoLogFilePath.c_str(), &st64) != 0)
                 {
                     FILE* pFile = fopen(m_sLogFilePath.c_str(), "a");
                     if (pFile != NULL)
@@ -239,8 +248,20 @@ class CLog
             // 不会返回脏数据
             size_t iLen = strftime(m_szTime, sizeof(m_szTime)
                                    , "%F %T", &stTm);
-            snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
-                     , ".%ld", stTv.tv_usec);
+            #if defined (__gnu_linux__)
+                // stTv.tv_usec is long int on Centos(linux 2.6.x with x86_64 gcc 4.4.7)
+                snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
+                         , ".%ld", stTv.tv_usec);
+            #elif defined (__APPLE__) || defined (__MACH__)
+                // stTv.tv_usec is int on Darwin(osx 10.11.5 with x86_64 gcc 4.8.5)
+                snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
+                         , ".%d", stTv.tv_usec);
+            #else
+                #warning "is this apple or linux ? why not define __gnu_linux__/__APPLE__/__MACH__"
+                #warning "now i think it is linux (default)"
+                snprintf(m_szTime+iLen, sizeof(m_szTime)-iLen
+                         , ".%ld", stTv.tv_usec);
+            #endif
             return m_szTime;
         };
 
@@ -289,8 +310,8 @@ class CLog
         void LogFileRotate()
         {
             // 对于出错情况，也要尝试滚动
-            struct stat64 st64;
-            int iRet = stat64(m_sLogFilePath.c_str(), &st64);
+            struct STAT64 st64;
+            int iRet = STAT64(m_sLogFilePath.c_str(), &st64);
             if (iRet == 0 && st64.st_size < m_llLogFileMaxSize)
             {
                 // 还没有到滚动的时候
