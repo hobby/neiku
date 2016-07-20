@@ -1,0 +1,153 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+###########################################################################
+# NAME
+#     neiku_config - query neiku's config
+#
+# SYNOPSIS
+#     neiku_config options modules...
+#
+#     debug=on neiku_config ...
+#
+# OPTIONS
+#     --incs get include config for modules
+#     --libs get library config for modules
+#     --conf get config for modules
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# VERSION
+#     2016/07/20: 支持incs/libs/conf三类配置
+#                 支持简单模块依赖(reqs)
+#
+# EXAMPLE:
+#     (1) 编辑本文件(neiku_config)，补充neiku_home、neiku_config配置
+#     例如:
+#     neiku_home=/home/YIF/neiku/
+#     neiku_config=/home/YIF/neiku/neiku.conf
+#     
+#     (2) 查询模块头文件编译配置
+#     $ neiku_config --incs <模块1> <模块2> <模块?>
+#
+#     (3) 查询模块库文件编译配置
+#     $ neiku_config --libs <模块1> <模块2> <模块?> 
+#
+#     (4) 查询指定配置
+#     $ neiku_config --conf <配置名>
+#
+###########################################################################
+
+# neiku's home
+neiku_home=
+neiku_config=
+
+# help
+function help()
+{
+    echo "Usage: $0 options modules..."
+    echo "Options:"
+    echo "  --incs get include config for modules"
+    echo "  --libs get library config for modules"
+    echo "  --conf get config for modules"
+    echo ""
+    echo "Report bugs to <ku7d@qq.com>"
+}
+
+# get config
+function getconfig()
+{
+    if [ ! -f "$neiku_config" ] ; then
+        return
+    fi
+
+    key="$1"
+    if [ "$key" = "neiku.home" ] ; then
+        echo "$neiku_home"
+        return
+    fi
+
+    grep -v -E "^#|^$" "$neiku_config" \
+    | grep -P "^[\t ]*$key[\t ]*="     \
+    | sed 's/^[^=]*=//g'
+}
+
+cmdline_incs=
+cmdline_libs=
+cmdline_conf=
+cmdline_modules=
+cmdline_noline=
+
+temp=$(getopt -o "" --long "incs,libs,conf,noline" -n "$0" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+while true
+do
+    case "$1" in
+        --incs) cmdline_incs=1; shift 1 ;;
+        --libs) cmdline_libs=1; shift 1 ;;
+        --conf) cmdline_conf=1; shift 1 ;;
+        --noline) cmdline_noline=1; shift 1 ;;
+        -h) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+if [   -z "$cmdline_incs" \
+    -a -z "$cmdline_libs" \
+    -a -z "$cmdline_conf" ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+
+cmdline_modules=$*
+
+if [ -n "$cmdline_incs" ] ; then
+    for module in $cmdline_modules; do
+
+        space=""
+        reqs="`getconfig $module.reqs`"
+        if [ -n "$reqs" ] ; then
+            space=" "
+            neiku_config --noline --incs $reqs
+        fi
+        echo -n "$space"
+
+        incs="`getconfig $module.incs`"
+        echo -n "`eval echo $incs`"
+
+        [ -n "$incs" ] && echo -n " "
+    done
+
+    if [ -z "$cmdline_noline" ] ; then
+        echo
+    fi
+fi
+
+if [ -n "$cmdline_libs" ] ; then
+    for module in $cmdline_modules; do
+        libs="`getconfig $module.libs`"
+        echo -n "`eval echo $libs`"
+
+        [ -n "$libs" ] && echo -n " "
+
+        reqs="`getconfig $module.reqs`"
+        if [ -n "$reqs" ] ; then
+            echo -n "$space"
+            neiku_config --noline --libs $reqs
+        fi
+    done
+
+    if [ -z "$cmdline_noline" ] ; then
+        echo
+    fi
+fi
+
+if [ -n "$cmdline_conf" ] ; then
+    getconfig $cmdline_modules
+fi
+
