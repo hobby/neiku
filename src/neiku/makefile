@@ -1,26 +1,17 @@
 
+include $(shell neiku_config --conf makefile.neiku)
 
-include ../../makefile.neiku
+INCS = $(shell neiku_config --incs charset cmdline)
 
-DIY_INC = -I../../include/ \
-
-DIY_LIB = 
-
-VPATH =
+LIBPATH = $(shell neiku_config --conf neiku.libpath)
 
 OUTPUT = libneiku.a
 
-LIBNEIKU_A_OBJS = charset.o \
-
 ALL: $(OUTPUT)
 
-libneiku.so: $(LIBNEIKU_A_OBJS)
-	g++ -fPIC -shared -o $@ $^ $(ALL_LIB)
-	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
-
-libneiku.a: $(LIBNEIKU_A_OBJS)
+libneiku.a: charset.o cmdline.o
 	ar -r $@ $^
-	mkdir -pv $(COMM_LIB_PATH) && cp -vf $@ $(COMM_LIB_PATH)
+	mkdir -pv $(LIBPATH) && cp -vf $@ $(LIBPATH)
 
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so

@@ -21,6 +21,7 @@
 # VERSION
 #     2016/07/20: 支持incs/libs/conf三类配置
 #                 支持简单模块依赖(reqs)
+#     2016/07/21: 支持conf配置中的shell命令
 #
 # EXAMPLE:
 #     (1) 编辑本文件(neiku_config)，补充neiku_home、neiku_config配置
@@ -148,6 +149,7 @@ if [ -n "$cmdline_libs" ] ; then
 fi
 
 if [ -n "$cmdline_conf" ] ; then
-    getconfig $cmdline_modules
+    config="`getconfig $cmdline_modules`"
+    echo "`eval echo $config`"
 fi
 
