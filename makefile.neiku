@@ -20,6 +20,8 @@
 #             (2) 编译配置由项目makefile提供
 #             (3) 项目makefile使用neiku_config工具管理配置
 #             (4) 编译配置包含头文件、库文件、源文件配置
+# 2016/07/25: 
+#             (1) 源文件配置使用SRCS变量，隐藏make内置的VPATH变量
 #
 # bug fix:
 # 2012/11/14: 
@@ -35,7 +37,9 @@
 # --------------------------------------------------------------
 INCS  = # 头文件配置，例如: -I/path/to/include
 LIBS  = # 库文件配置，例如: -L/path/to/library -lname
-VPATH = # 源文件配置，例如: /path/to/src/
+SRCS  = # 源文件配置，例如: /path/to/src/
+
+VPATH += ${SRCS} # make内置的源文件目录配置
 
 # 编译规则
 # --------------------------------------------------------------
@@ -55,13 +59,13 @@ VPATH = # 源文件配置，例如: /path/to/src/
 # --------------------------------------------------------------
 # include $(shell neiku_config --conf makefile.neiku)
 # 
-# INCS  = $(shell neiku_config --incs <name>) \
+# INCS = $(shell neiku_config --incs <name>) \
 #         -I/path/to/include/
 #
-# LIBS  = $(shell neiku_config --libs <name>) \
+# LIBS = $(shell neiku_config --libs <name>) \
 #         -L/path/to/library/ -l<name>
 #
-# VPATH = /path/to/src/
+# SRCS = /path/to/src/
 # 
 # OUTPUT= helloworld
 #
