@@ -18,7 +18,7 @@ int main()
     //cgi.SetValue("name", "YIF");
     //LOG_MSG("name:[%s]", cgi.GetValue("name"));
 
-    //cgi.Render("template.cs");
+    //int ret = cgi.Render("template.cs");
     //LOG_MSG("ret:[%d], msg:[%s]", ret, cgi.GetErrMsg());
 
     //cgi.Redirect302Url("%s", "/");

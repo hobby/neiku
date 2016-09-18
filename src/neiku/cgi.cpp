@@ -5,6 +5,11 @@
 
 #include "neiku/cgi.h"
 
+#include "fcgios.h"
+#include "fcgi_stdio.h"
+
+extern char** environ;
+
 using namespace neiku;
 
 static NEOERR* RenderOutputCallback(void *ctx, char *buf)
@@ -12,16 +17,49 @@ static NEOERR* RenderOutputCallback(void *ctx, char *buf)
     return nerr_pass(string_append(static_cast<STRING*>(ctx), buf));
 }
 
-#define CHECK_INIT(RET) if (!m_bInit && !Init()) { SetErrMsg("cgi util init fail"); return RET; }
+// enable cgi & fastcgi with libfcgi
+static int cs_read(void *ctx, char *s, int n)
+{
+  return FCGI_fread(s, 1, n, FCGI_stdin);
+}
+static int cs_vprintf(void *ctx, const char *s, va_list args)
+{
+  return FCGI_vprintf(s, args);
+}
+static int cs_write(void *ctx, const char *s, int n)
+{
+  return FCGI_fwrite(const_cast<char *>(s), 1, n, FCGI_stdout);
+}
 
-CCgi::CCgi(): m_pCGI(NULL), m_bInit(false)
+CCgi::CCgi(): m_pCGI(NULL), m_bInit(false), m_bAccepted(false)
 {
     Init();
 }
 
 CCgi::~CCgi()
 {
+    // always cleanup
     Destroy();
+
+    // free memory allocated in OS_LibInit()
+    // inside the FCGI_Accept()
+    OS_LibShutdown();
+}
+
+bool CCgi::Accept()
+{
+    if(!FCGX_IsCGI())
+    {
+        Destroy();
+        return FCGI_Accept() == 0;
+    }
+
+    if(!m_bAccepted)
+    {
+        return m_bAccepted = true;
+    }
+
+    return false;
 }
 
 const char* CCgi::GetErrMsg()
@@ -108,12 +146,13 @@ int CCgi::SetValue(const char* szName, int iValue)
     return 0;
 }
 
-// do not fclose it
-FILE* CCgi::GetFile(const char* szName)
-{
-    CHECK_INIT(NULL);
-    return cgi_filehandle(m_pCGI, szName);
-}
+// with libfcgi, FILE* became FCGI_FILE*
+// but cgi_filehandle always return FILE* from libneo_cgi
+// FILE* CCgi::GetFile(const char* szName)
+// {
+//     CHECK_INIT(NULL);
+//     return cgi_filehandle(m_pCGI, szName);
+// }
 
 // 302 to http(s)://domain/path/to/xxx
 void CCgi::Redirect302Url(const char* fmt, ...)
@@ -175,7 +214,14 @@ bool CCgi::Init()
         return true;
     }
 
-    Destroy();
+    // enable cgi & fastcgi with libfcgi(fcgi_stdio.h)
+    cgiwrap_init_std(0, NULL, environ);
+    cgiwrap_init_emu(NULL, cs_read, cs_vprintf, cs_write, NULL, NULL, NULL);
+    if (FCGX_IsCGI())
+    {
+        FCGI_Accept();
+        m_bAccepted = false;
+    }
     
     // parse http header
     pError = cgi_init(&m_pCGI, NULL);
@@ -224,6 +270,8 @@ void CCgi::Destroy()
         cgi_destroy(&m_pCGI);
         m_pCGI = NULL;
     }
+
+    m_bAccepted = false;
 }
 
 int CCgi::Render(const char* szTplPath, STRING& stOutput)
@@ -302,7 +350,7 @@ void CCgi::SetErrMsg(NEOERR* pError)
 
     STRING str;
     string_init(&str);
-    nerr_error_string(pError, &str);
+    nerr_error_traceback(pError, &str);
     nerr_ignore(&pError);
     m_sLastErrMsg.assign(str.buf, str.len);
     string_clear(&str);

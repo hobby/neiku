@@ -2,7 +2,7 @@
 
 /*
  * file:   neiku/cgi.h
- * desc:   基于ClearSilver的CGI工具，支持CGI协议
+ * desc:   基于ClearSilver/fastcgi(libfcgi)的CGI工具，支持CGI协议、FastCGI协议
  * author: YIF
  * date:   2016/09/17 16:00:00
  * version: 
@@ -12,9 +12,14 @@
  *                    支持模板渲染输出(cs)
  *                    支持在线dump/debug数据
  *                    支持压缩输出(gzip)
+ *         2016/09/18 支持FastCGI协议(需外部wrapper拉起)
+ *                    支持自动兼容CGI/FastCGI运行模式
+ *                    支持通过nerr_error_traceback获取更多出错现场
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
+ *       -I~/opt/fastcgi/include/
+ *       -L~/opt/fastcgi/lib/ -lfcgi
  *
  * basic:
  * 1、GetValue/SetValue中的name规范
@@ -25,6 +30,13 @@
  * 2、在线dump/debug
  *    dump  => http://localhost/?debug=neiku@dump
  *    debug => http://localhost/?debug=neiku@debug
+ * 3、自动兼容CGI/FastCGI的示例
+ *    CCgi cgi;
+ *    while (cgi.Accept())
+ *    {
+ *         // handle request
+ *         // cgi.Render();
+ *    }
  */
 
 #ifndef __NEIKU_CGI_H__
@@ -40,9 +52,15 @@ namespace neiku
 class CCgi
 {
 
+#define CHECK_INIT(RET) if (!m_bInit && !Init()) { SetErrMsg("cgi util init fail"); return RET; }
+
 public:
     CCgi();
     ~CCgi();
+
+    // true  - new request is ready
+    // false - no more request or internal error
+    bool Accept();
 
     const char* GetErrMsg();
 
@@ -58,7 +76,11 @@ public:
 
 public:
     // do not fclose it
-    FILE* GetFile(const char* szName);
+    FILE* GetFile(const char* szName)
+    {
+        CHECK_INIT(NULL);
+        return cgi_filehandle(m_pCGI, szName);
+    }
 
 public:
     // 302 to http(s)://domain/path/to/xxx
@@ -82,6 +104,8 @@ private:
     CGI *m_pCGI;
     bool m_bInit;
     std::string m_sLastErrMsg;
+
+    bool m_bAccepted;
 };
 
 };
