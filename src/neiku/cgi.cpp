@@ -33,7 +33,17 @@ static int cs_write(void *ctx, const char *s, int n)
 
 CCgi::CCgi(): m_pCGI(NULL), m_bInit(false), m_bAccepted(false)
 {
-    Init();
+    // enable cgi & fastcgi with libfcgi(fcgi_stdio.h)
+    cgiwrap_init_std(0, NULL, environ);
+    cgiwrap_init_emu(NULL, cs_read, cs_vprintf, cs_write, NULL, NULL, NULL);
+
+    // now i am CGI, i must accept the only one request
+    // before parsing CGI protocol
+    if (FCGX_IsCGI())
+    {
+        FCGI_Accept();
+        m_bAccepted = false;
+    }
 }
 
 CCgi::~CCgi()
@@ -213,15 +223,6 @@ bool CCgi::Init()
     {
         return true;
     }
-
-    // enable cgi & fastcgi with libfcgi(fcgi_stdio.h)
-    cgiwrap_init_std(0, NULL, environ);
-    cgiwrap_init_emu(NULL, cs_read, cs_vprintf, cs_write, NULL, NULL, NULL);
-    if (FCGX_IsCGI())
-    {
-        FCGI_Accept();
-        m_bAccepted = false;
-    }
     
     // parse http header
     pError = cgi_init(&m_pCGI, NULL);
@@ -251,11 +252,8 @@ bool CCgi::Init()
     hdf_set_int_value(m_pCGI->hdf, "Config.TimeFooter", 0);
     
     // template's search paths
-    const char* pRoot = hdf_get_value(m_pCGI->hdf, "CGI.DocumentRoot", NULL);
-    if (pRoot != NULL)
-    {
-        hdf_set_value(m_pCGI->hdf, "hdf.loadpaths.0", pRoot);
-    }
+    const char* pRoot = hdf_get_value(m_pCGI->hdf, "CGI.DocumentRoot", "./");
+    hdf_set_value(m_pCGI->hdf, "hdf.loadpaths.0", pRoot);
 
     m_bInit = true;
     return true;
