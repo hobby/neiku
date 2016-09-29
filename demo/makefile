@@ -11,3 +11,4 @@ DIRS = singleton \
        proc \
        serialize \
        cgi \
+       cs \
