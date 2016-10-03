@@ -13,7 +13,7 @@ ALL: $(OUTPUT)
 
 cgi_test: cgi_test.o cgx.o
 upload: upload.o cgx.o
-fcgi_hello: fcgi_hello.o cgx.o
+fcgi_hello: fcgi_hello.o cgx.o cgx_main.o
 
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so

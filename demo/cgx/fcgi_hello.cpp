@@ -3,11 +3,14 @@
 #include <unistd.h>
 #include "neiku/log.h"
 #include "neiku/cgx.h"
+#include "neiku/cgx_main.h"
 
 using namespace neiku;
 
-int main()
+int main(int argc, char* argv[])
 {
+    cgx_main(argc, argv);
+
     CCgx *CGX = new CCgx();
     while (CGX->Accept())
     {
