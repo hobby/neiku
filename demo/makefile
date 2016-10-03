@@ -10,5 +10,5 @@ DIRS = singleton \
        cmdline \
        proc \
        serialize \
-       cgi \
+       cgx \
        cs \

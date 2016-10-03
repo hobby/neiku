@@ -1,13 +1,13 @@
 // vim:ts=4:sw=4:expandtab
 
 #include "neiku/log.h"
-#include "neiku/cgi.h"
+#include "neiku/cgx.h"
 
 using namespace neiku;
 
 int main()
 {
-    CCgi cgi;
+    CCgx cgi;
 
     // std::string output;
     //int iRet = cgi.Dump(output);

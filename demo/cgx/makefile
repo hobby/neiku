@@ -11,9 +11,9 @@ OUTPUT = cgi_test upload fcgi_hello
 
 ALL: $(OUTPUT)
 
-cgi_test: cgi_test.o cgi.o
-upload: upload.o cgi.o
-fcgi_hello: fcgi_hello.o cgi.o
+cgi_test: cgi_test.o cgx.o
+upload: upload.o cgx.o
+fcgi_hello: fcgi_hello.o cgx.o
 
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so

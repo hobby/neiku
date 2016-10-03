@@ -1,11 +1,11 @@
 // vim:ts=4:sw=4:expandtab
 
 /*
- * file:   neiku/cgi.h
+ * file:   neiku/cgx.h
  * desc:   基于ClearSilver/fastcgi(libfcgi)的CGI工具，支持CGI协议、FastCGI协议
  * author: YIF
  * date:   2016/09/17 16:00:00
- * version: 
+ * version:
  *         2016/09/17 支持简单的get/set方法
  *                    支持获取上传文件FILE*(无需fclose)
  *                    支持url/uri跳转(302)
@@ -15,6 +15,7 @@
  *         2016/09/18 支持FastCGI协议(需外部wrapper拉起)
  *                    支持自动兼容CGI/FastCGI运行模式
  *                    支持通过nerr_error_traceback获取更多出错现场
+ *         2016/10/03 改名为CGX (X=> cgi+fastcgi+cpp)
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -31,16 +32,16 @@
  *    dump  => http://localhost/?debug=neiku@dump
  *    debug => http://localhost/?debug=neiku@debug
  * 3、自动兼容CGI/FastCGI的示例
- *    CCgi cgi;
- *    while (cgi.Accept())
+ *    CCgx *CGX = new CCgx;
+ *    while (CGX->Accept())
  *    {
  *         // handle request
- *         // cgi.Render();
+ *         // CGI->Render();
  *    }
  */
 
-#ifndef __NEIKU_CGI_H__
-#define __NEIKU_CGI_H__ 1
+#ifndef __NEIKU_CGX_H__
+#define __NEIKU_CGX_H__ 1
 
 #include <cstdlib>
 #include <string>
@@ -49,14 +50,14 @@
 namespace neiku
 {
 
-class CCgi
+class CCgx
 {
 
 #define CHECK_INIT(RET) if (!m_bInit && !Init()) { SetErrMsg("cgi util init fail"); return RET; }
 
 public:
-    CCgi();
-    ~CCgi();
+    CCgx();
+    ~CCgx();
 
     // true  - new request is ready
     // false - no more request or internal error
@@ -94,7 +95,7 @@ public:
 private:
     bool Init();
     void Destroy();
-    
+
     void SetErrMsg(NEOERR* pError);
     void SetErrMsg(const char* szErrMsg);
 
