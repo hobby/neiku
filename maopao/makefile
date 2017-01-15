@@ -3,6 +3,7 @@ output = mp-log \
          mp-create \
          mp-send \
          mp-recv \
+         mp-exec \
 
 profile =
 

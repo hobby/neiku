@@ -53,7 +53,6 @@ do
         *)  echo "parse options error!" >&2 ; exit 1 ;;
     esac
 done
-cmdline_targets="$@"
 mp-log debug "taskfile:[$cmdline_taskfile]"
 
 # load taskfile content
@@ -67,5 +66,10 @@ else
     echo ""
 fi
 
-# TODO: parse, pre-pull, pull, post-pull
-echo "$taskfile"
+# exec task
+echo "$taskfile" | mp-exec &
+if [ $? -ne 0 ] ; then
+    echo "got task, but exec fail!" >&2
+    exit 1
+fi
+echo "got task, and started, pid:[$!]"

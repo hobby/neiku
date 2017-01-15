@@ -65,7 +65,6 @@ do
         *)  echo "parse options error!" >&2 ; exit 1 ;;
     esac
 done
-cmdline_targets="$@"
 mp-log debug "username:[$cmdline_username]," \
              "hostaddr:[$cmdline_hostaddr], hostport:[$cmdline_hostport]," \
              "taskfile:[$cmdline_taskfile]"
@@ -82,4 +81,4 @@ else
 fi
 
 # send to remote with SSH (remote pipe)
-echo "$taskfile" | ssh -T $cmdline_username@$cmdline_hostaddr -p $cmdline_hostport "mp-recv"
+echo "$taskfile" | ssh -T -i ~/.ssh/id_rsa.maopao $cmdline_username@$cmdline_hostaddr -p $cmdline_hostport "mp-recv"

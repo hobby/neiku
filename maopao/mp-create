@@ -83,7 +83,6 @@ do
         *)  echo "parse options error!" >&2 ; exit 1 ;;
     esac
 done
-cmdline_targets="$@"
 mp-log debug "taskseq:[$cmdline_taskseq]," \
              "srchost:[$cmdline_srchost], dsthost:[$cmdline_dsthost], othhost:[$cmdline_othhost]," \
              "srcroot:[$cmdline_srcroot], dstroot:[$cmdline_dstroot]," \

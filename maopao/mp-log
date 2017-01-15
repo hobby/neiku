@@ -42,5 +42,5 @@ then
     echo -n "`pinktext "$*"`"
 elif [ "$type" = "debug" ]
 then
-    if [ -n "$debug" ] ; then echo "`yellowtext $*`" >&2; fi
+    if [ -n "$debug" ] ; then echo "`yellowtext "$*"`" >&2; fi
 fi

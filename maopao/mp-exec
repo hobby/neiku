@@ -1,0 +1,135 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+###########################################################################
+# NAME
+#     mp-exec - tool for exec maopao task
+#
+# SYNOPSIS
+#     mp-exec [ options ]
+#
+#     debug=on mp-exec ...
+#
+# OPTIONS
+#       -f TASKFILE Set taskfile to exec (default is STDIN).
+#       -h          Print this message and exit.
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# VERSION
+#     2017/01/15: 支持以PULL模式执行任务-拉取文件
+#
+###########################################################################
+
+# help
+function help()
+{
+    echo "Usage: mp-exec [ options ]"
+    echo "Options:"
+    echo "    -f TASKFILE Set taskfile to exec (default is STDIN)."
+    echo "    -h          Print this message and exit."
+    echo ""
+    echo "Report bugs to YIF <ku7d@qq.com>"
+}
+
+cmdline_taskfile=""
+
+# parse cmdline
+mp-log debug "origin-args:[$@]"
+temp=$(getopt -o "u:H:P:f:h" --long "" -n "mp-exec" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+mp-log debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -f) cmdline_taskfile="$2" ;  shift 2 ;;
+        -h) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+mp-log debug "taskfile:[$cmdline_taskfile]"
+
+# load task content
+task=""
+if [ ! -z "$cmdline_taskfile" ] ; then
+    task="`cat "$cmdline_taskfile"`"
+else
+    echo "please give me the task (end with ctrl+d):"
+    task="`cat -`"
+    echo "ok! i got the task, there are `echo "$task" | wc -l` lines."
+    echo ""
+fi
+mp-log debug "task:[\n$task\n]"
+
+# parse task
+taskseq=""
+srchost=""
+dsthost=""
+othhost=""
+srcroot=""
+dstroot=""
+file_task_metainfo=""
+file_task_filelist=""
+
+## task's metainfo
+metainfo="$(echo "$task" | while read line; do if [ -z "$line" ] ; then break; fi; echo "$line"; done)"
+taskseq="$(echo "$metainfo" | grep -i -w "TaskSeq" | tr -d ' ' | awk -F':' '{print $2}')"
+srchost="$(echo "$metainfo" | grep -i -w "SrcHost" | tr -d ' ' | awk -F':' '{print $2}')"
+dsthost="$(echo "$metainfo" | grep -i -w "DstHost" | tr -d ' ' | awk -F':' '{print $2}')"
+othhost="$(echo "$metainfo" | grep -i -w "OthHost" | tr -d ' ' | awk -F':' '{print $2}')"
+srcroot="$(echo "$metainfo" | grep -i -w "SrcRoot" | tr -d ' ' | awk -F':' '{print $2}')"
+dstroot="$(echo "$metainfo" | grep -i -w "DstRoot" | tr -d ' ' | awk -F':' '{print $2}')"
+mp-log debug "metainfo:[\n$metainfo\n], taskseq:[$taskseq]," \
+             "srchost:[$srchost], dsthost:[$dsthost], othhost:[$othhost]," \
+             "srcroot:[$srcroot], dstroot:[$dstroot]"
+
+## save metainfo & filelist
+file_task_metainfo="./task_metainfo_$taskseq.txt"
+file_task_filelist="./task_filelist_$taskseq.txt"
+echo "$metainfo" > $file_task_metainfo
+echo "$task" | tac | while read line; do if [ -z "$line" ] ; then break; fi; echo "$line"; done | tac > $file_task_filelist
+filecount="$(wc -l $file_task_filelist | awk '{print $1}')"
+mp-log debug "metainfo-file:[$file_task_metainfo], filelist-file:[$file_task_filelist], filelist-count:[$filecount]"
+
+# pull files
+if [ ! -z "$srchost" -a "$filecount" -ne "0" ] ; then
+    ## scripts
+    file_task_mkdir="./task_mkdir_$taskseq.sh"
+    file_task_pull="./task_pull_$taskseq.sftp"
+    mp-log debug "mkdir-script:[$file_task_mkdir], pull-script:[$file_task_pull]"
+
+    ## generate mkdir commands (sh)
+    > $file_task_mkdir
+    cat $file_task_filelist \
+        | while read filename; do echo "`dirname $filename`"; done | sort -u \
+        | while read dirname; do echo "mkdir -pv '$dstroot/$dirname' || exit 1" >> $file_task_mkdir; done
+    echo "echo mkdir end" >> $file_task_mkdir
+
+    ## execute mkdir commands (sh)
+    sh $file_task_mkdir
+    if [ $? -ne 0 ] ; then
+        mp-log error "mkdir fail, taskseq:[$taskseq], mkdir-script:[$file_task_mkdir]"
+        exit 1
+    fi
+
+    ## generate pull commands (sftp)
+    > $file_task_pull
+    cat $file_task_filelist \
+        | while read filename; do echo "get '$srcroot/$filename' '$dstroot/$filename'" >> $file_task_pull; done
+    echo "quit" >> $file_task_pull
+
+    ## execute pull commands (sftp)
+    sftp -i ~/.ssh/id_rsa.maopao root@$srchost -P22 < $file_task_pull
+    if [ $? -ne 0 ] ; then
+        mp-log error "pull fail, taskseq:[$taskseq], pull-script:[$file_task_pull]"
+        exit 1
+    fi
+fi
+
+# TODO: forward task to other host
