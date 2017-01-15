@@ -1,0 +1,120 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+###########################################################################
+# NAME
+#     mp-create - tool for create maopao task
+#
+# SYNOPSIS
+#     mp-create [ options ]
+#
+#     debug=on mp-create ...
+#
+# OPTIONS
+#       -t TASKSEQ    Set task's TaskSeq.
+#       -s SRCHOST    Set task's SrcHost.
+#       -d DSTHOST    Set task's DstHost.
+#       -o OTHHOST    Set task's OthHost.
+#       -q SRCROOT    Set task's SrcRoot.
+#       -p DSTROOT    Set task's DstRoot.
+#       -f FILELIST   Set task's FileList from FILELIST.
+#       -h            Print this message and exit.
+#
+#       -O TASKFILE   Output task content to TASKFILE.
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# VERSION
+#     2017/01/15: 支持生成分发任务，并可落地到文件
+#
+###########################################################################
+
+# help
+function help()
+{
+    echo "Usage: mp-create [ options ]"
+    echo "Options:"
+    echo "    -t TASKSEQ    Set task's TaskSeq."
+    echo "    -s SRCHOST    Set task's SrcHost."
+    echo "    -d DSTHOST    Set task's DstHost."
+    echo "    -o OTHHOST    Set task's OthHost."
+    echo "    -q SRCROOT    Set task's SrcRoot."
+    echo "    -p DSTROOT    Set task's DstRoot."
+    echo "    -f FILELIST   Set task's FileList from FILELIST."
+    echo "    -h            Print this message and exit."
+    echo ""
+    echo "    -O TASKFILE   Output task content to TASKFILE."
+    echo ""
+    echo "Report bugs to YIF <ku7d@qq.com>"
+}
+
+cmdline_taskseq=""
+cmdline_srchost=""
+cmdline_dsthost=""
+cmdline_othhost=""
+cmdline_srcroot=""
+cmdline_dstroot=""
+cmdline_filelist=""
+cmdline_taskfile=""
+
+# parse cmdline
+mp-log debug "origin-args:[$@]"
+temp=$(getopt -o "t:s:d:o:q:p:f:hO:" --long "" -n "mp-create" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+mp-log debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -t) cmdline_taskseq="$2" ;  shift 2 ;;
+        -s) cmdline_srchost="$2" ;  shift 2 ;;
+        -d) cmdline_dsthost="$2" ;  shift 2 ;;
+        -o) cmdline_othhost="$2" ;  shift 2 ;;
+        -q) cmdline_srcroot="$2" ;  shift 2 ;;
+        -p) cmdline_dstroot="$2" ;  shift 2 ;;
+        -f) cmdline_filelist="$2" ;  shift 2 ;;
+        -h) echo "`help`" >&2; exit 0;;
+        -O) cmdline_taskfile="$2" ;  shift 2 ;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+cmdline_targets="$@"
+mp-log debug "taskseq:[$cmdline_taskseq]," \
+             "srchost:[$cmdline_srchost], dsthost:[$cmdline_dsthost], othhost:[$cmdline_othhost]," \
+             "srcroot:[$cmdline_srcroot], dstroot:[$cmdline_dstroot]," \
+             "filelist:[$cmdline_filelist], taskfile:[$cmdline_taskfile]"
+
+# get filelist
+filelist=""
+if [ ! -z "$cmdline_filelist" ] ; then
+    filelist="`cat "$cmdline_filelist"`"
+else
+    echo "please give me the filelist (one file per line, end with ctrl+d):"
+    filelist="`cat -`"
+    echo "ok! i got `echo "$filelist" | wc -l` files."
+    echo ""
+fi
+
+# using stdout for output default
+output="/dev/tty"
+if [ ! -z "$cmdline_taskfile" ] ; then
+    output="$cmdline_taskfile"
+fi
+> "$output"
+
+# create task's header
+echo "TaskSeq: $cmdline_taskseq" >> "$output"
+echo "SrcHost: $cmdline_srchost" >> "$output"
+echo "DstHost: $cmdline_dsthost" >> "$output"
+echo "OthHost: $cmdline_othhost" >> "$output"
+echo "SrcRoot: $cmdline_srcroot" >> "$output"
+echo "DstRoot: $cmdline_dstroot" >> "$output"
+echo ""                          >> "$output"
+
+# create task's body
+echo "$filelist" >> "$output"
