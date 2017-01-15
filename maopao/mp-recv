@@ -1,0 +1,71 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+###########################################################################
+# NAME
+#     mp-recv - tool for recv maopao task with SSH
+#
+# SYNOPSIS
+#     mp-recv [ options ]
+#
+#     debug=on mp-recv ...
+#
+# OPTIONS
+#       -f TASKFILE Set taskfile to recv (default is STDIN).
+#       -h          Print this message and exit.
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# VERSION
+#     2017/01/15: 支持接收(并处理)分发任务
+#
+###########################################################################
+
+# help
+function help()
+{
+    echo "Usage: mp-recv [ options ]"
+    echo "Options:"
+    echo "    -f TASKFILE Set taskfile to recv (default is STDIN)."
+    echo "    -h          Print this message and exit."
+    echo ""
+    echo "Report bugs to YIF <ku7d@qq.com>"
+}
+
+cmdline_taskfile=""
+
+# parse cmdline
+mp-log debug "origin-args:[$@]"
+temp=$(getopt -o "u:H:P:f:h" --long "" -n "mp-recv" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+mp-log debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -f) cmdline_taskfile="$2" ;  shift 2 ;;
+        -h) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+cmdline_targets="$@"
+mp-log debug "taskfile:[$cmdline_taskfile]"
+
+# load taskfile content
+taskfile=""
+if [ ! -z "$cmdline_taskfile" ] ; then
+    taskfile="`cat "$cmdline_taskfile"`"
+else
+    echo "please give me the task (end with ctrl+d):"
+    taskfile="`cat -`"
+    echo "ok! i got the task, there are `echo "$taskfile" | wc -l` lines."
+    echo ""
+fi
+
+# TODO: parse, pre-pull, pull, post-pull
+echo "$taskfile"

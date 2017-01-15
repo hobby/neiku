@@ -1,0 +1,85 @@
+#!/bin/bash
+# vim:ts=4:sw=4:expandtab
+
+###########################################################################
+# NAME
+#     mp-send - tool for send maopao task with SSH
+#
+# SYNOPSIS
+#     mp-send [ options ]
+#
+#     debug=on mp-send ...
+#
+# OPTIONS
+#       -u USERNAME Set remote's username
+#       -H HOSTADDR Set remote's hostaddr
+#       -P HOSTPORT Set remote's hostport
+#       -f TASKFILE Set taskfile to send (default is STDIN).
+#       -h          Print this message and exit.
+#
+# AUTHORS
+#     neiku project <ku7d@qq.com>
+#
+# VERSION
+#     2017/01/15: 支持发送分发任务
+#
+###########################################################################
+
+# help
+function help()
+{
+    echo "Usage: mp-send [ options ]"
+    echo "Options:"
+    echo "    -u USERNAME Set remote's username."
+    echo "    -H HOSTADDR Set remote's hostaddr."
+    echo "    -P HOSTPORT Set remote's hostport."
+    echo "    -f TASKFILE Set taskfile to send (default is STDIN)."
+    echo "    -h          Print this message and exit."
+    echo ""
+    echo "Report bugs to YIF <ku7d@qq.com>"
+}
+
+cmdline_username=""
+cmdline_hostaddr=""
+cmdline_hostport=""
+cmdline_taskfile=""
+
+# parse cmdline
+mp-log debug "origin-args:[$@]"
+temp=$(getopt -o "u:H:P:f:h" --long "" -n "mp-send" -- "$@")
+if [ $? != 0 ] ; then
+    echo "`help`" >&2
+    exit 1
+fi
+eval set -- "$temp"
+mp-log debug "parsed-args:[$temp]"
+while true
+do
+    case "$1" in
+        -u) cmdline_username="$2" ;  shift 2 ;;
+        -H) cmdline_hostaddr="$2" ;  shift 2 ;;
+        -P) cmdline_hostport="$2" ;  shift 2 ;;
+        -f) cmdline_taskfile="$2" ;  shift 2 ;;
+        -h) echo "`help`" >&2; exit 0;;
+        --) shift ; break ;;
+        *)  echo "parse options error!" >&2 ; exit 1 ;;
+    esac
+done
+cmdline_targets="$@"
+mp-log debug "username:[$cmdline_username]," \
+             "hostaddr:[$cmdline_hostaddr], hostport:[$cmdline_hostport]," \
+             "taskfile:[$cmdline_taskfile]"
+
+# load taskfile content
+taskfile=""
+if [ ! -z "$cmdline_taskfile" ] ; then
+    taskfile="`cat "$cmdline_taskfile"`"
+else
+    echo "please give me the task (end with ctrl+d):"
+    taskfile="`cat -`"
+    echo "ok! i got the task, there are `echo "$taskfile" | wc -l` lines."
+    echo ""
+fi
+
+# send to remote with SSH (remote pipe)
+echo "$taskfile" | ssh -T $cmdline_username@$cmdline_hostaddr -p $cmdline_hostport "mp-recv"

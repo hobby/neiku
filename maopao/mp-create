@@ -17,10 +17,10 @@
 #       -o OTHHOST    Set task's OthHost.
 #       -q SRCROOT    Set task's SrcRoot.
 #       -p DSTROOT    Set task's DstRoot.
-#       -f FILELIST   Set task's FileList from FILELIST.
+#       -f FILELIST   Set task's FileList from FILELIST (default is STDIN).
 #       -h            Print this message and exit.
 #
-#       -O TASKFILE   Output task content to TASKFILE.
+#       -O TASKFILE   Output task content to TASKFILE (default is STDOUT).
 #
 # AUTHORS
 #     neiku project <ku7d@qq.com>
@@ -41,10 +41,10 @@ function help()
     echo "    -o OTHHOST    Set task's OthHost."
     echo "    -q SRCROOT    Set task's SrcRoot."
     echo "    -p DSTROOT    Set task's DstRoot."
-    echo "    -f FILELIST   Set task's FileList from FILELIST."
+    echo "    -f FILELIST   Set task's FileList from FILELIST (default is STDIN)."
     echo "    -h            Print this message and exit."
     echo ""
-    echo "    -O TASKFILE   Output task content to TASKFILE."
+    echo "    -O TASKFILE   Output task content to TASKFILE (default is STDOUT)."
     echo ""
     echo "Report bugs to YIF <ku7d@qq.com>"
 }
