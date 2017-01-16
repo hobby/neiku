@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # vim:ts=4:sw=4:expandtab
 
 ###########################################################################
@@ -19,6 +19,7 @@
 #
 # VERSION
 #     2017/01/15: 支持以PULL模式执行任务-拉取文件
+#     2017/01/16: 支持拉取文件后，继续转发任务（二分法）
 #
 ###########################################################################
 
@@ -79,12 +80,12 @@ file_task_filelist=""
 
 ## task's metainfo
 metainfo="$(echo "$task" | while read line; do if [ -z "$line" ] ; then break; fi; echo "$line"; done)"
-taskseq="$(echo "$metainfo" | grep -i -w "TaskSeq" | tr -d ' ' | awk -F':' '{print $2}')"
-srchost="$(echo "$metainfo" | grep -i -w "SrcHost" | tr -d ' ' | awk -F':' '{print $2}')"
-dsthost="$(echo "$metainfo" | grep -i -w "DstHost" | tr -d ' ' | awk -F':' '{print $2}')"
-othhost="$(echo "$metainfo" | grep -i -w "OthHost" | tr -d ' ' | awk -F':' '{print $2}')"
-srcroot="$(echo "$metainfo" | grep -i -w "SrcRoot" | tr -d ' ' | awk -F':' '{print $2}')"
-dstroot="$(echo "$metainfo" | grep -i -w "DstRoot" | tr -d ' ' | awk -F':' '{print $2}')"
+taskseq="$(echo "$metainfo" | grep -i -w -P "^[ \t]*TaskSeq[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
+srchost="$(echo "$metainfo" | grep -i -w -P "^[ \t]*SrcHost[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
+dsthost="$(echo "$metainfo" | grep -i -w -P "^[ \t]*DstHost[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
+othhost="$(echo "$metainfo" | grep -i -w -P "^[ \t]*OthHost[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
+srcroot="$(echo "$metainfo" | grep -i -w -P "^[ \t]*SrcRoot[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
+dstroot="$(echo "$metainfo" | grep -i -w -P "^[ \t]*DstRoot[ \t]*:" | tr -d ' ' | tail -n 1| awk -F':' '{print $2}')"
 mp-log debug "metainfo:[\n$metainfo\n], taskseq:[$taskseq]," \
              "srchost:[$srchost], dsthost:[$dsthost], othhost:[$othhost]," \
              "srcroot:[$srcroot], dstroot:[$dstroot]"
@@ -125,11 +126,65 @@ if [ ! -z "$srchost" -a "$filecount" -ne "0" ] ; then
     echo "quit" >> $file_task_pull
 
     ## execute pull commands (sftp)
-    sftp -i ~/.ssh/id_rsa.maopao root@$srchost -P22 < $file_task_pull
+    sftp -i ~/.ssh/id_rsa.maopao maopao@$srchost -P22 < $file_task_pull
     if [ $? -ne 0 ] ; then
         mp-log error "pull fail, taskseq:[$taskseq], pull-script:[$file_task_pull]"
         exit 1
     fi
 fi
 
-# TODO: forward task to other host
+# forward tasks
+if [ ! -z "$othhost" -a "$filecount" -ne "0" ] ; then
+    subdsthost1=""
+    subothhost1=""
+    subdsthost2=""
+    subothhost2=""
+    file_task_subtask1="./task_subtask1_$taskseq.mp"
+    file_task_subtask2="./task_subtask2_$taskseq.mp"
+
+    iplist="$othhost"
+    iplist="$(echo "$iplist" | tr ',' '\n' | sort -R | sort -R | tr '\n' ',' | sed 's/,$//g')"
+    count="$(echo "$iplist" | tr ',' '\n'  | wc -l)"
+    iplist1="$(echo "$iplist" | tr ',' '\n' | head -n -$((count/2)) | tr '\n' ',' | sed 's/,$//g')"
+    iplist2="$(echo "$iplist" | tr ',' '\n' | tail -n -$((count/2)) | tr '\n' ',' | sed 's/,$//g')"
+    subdsthost1="$(echo "$iplist1" | tr ',' '\n' | head -n +1)"
+    subothhost1="$(echo "$iplist1" | tr ',' '\n' | tail -n +2 | tr '\n' ',' | sed 's/,$//g')"
+    subdsthost2="$(echo "$iplist2" | tr ',' '\n' | head -n +1)"
+    subothhost2="$(echo "$iplist2" | tr ',' '\n' | tail -n +2 | tr '\n' ',' | sed 's/,$//g')"
+    mp-log debug "subdsthost1:[$subdsthost1], subothhost1:[$subothhost1]," \
+                 "subdsthost2:[$subdsthost2], subothhost2:[$subothhost2]," \
+                 "subtask1-file:[$file_task_subtask1], subtask1-file:[$file_task_subtask2]" \
+                 "iplist:[$iplist], iplist1:[$iplist1], iplist2:[$iplist2]"
+
+    ## create sub-task1
+    mp-create -t "$taskseq" -s "$dsthost" -d "$subdsthost1" -o "$subothhost1" \
+              -q "$dstroot" -p "$dstroot" \
+              -f "$file_task_filelist" -O "$file_task_subtask1"
+    if [ $? -ne 0 ] ; then
+        mp-log error "create sub-task1 fail, taskseq:[$taskseq], subdsthost1:[$subdsthost1]"
+        exit 1
+    fi
+
+    ## forward sub-task1
+    mp-send -u maopao -H "$subdsthost1" -P "22" -f "$file_task_subtask1"
+    if [ $? -ne 0 ] ; then
+        mp-log error "send sub-task1 fail, taskseq:[$taskseq], subdsthost1:[$subdsthost1]"
+        exit 1
+    fi
+
+    ## create sub-task2
+    mp-create -t "$taskseq" -s "$dsthost" -d "$subdsthost2" -o "$subothhost2" \
+              -q "$dstroot" -p "$dstroot" \
+              -f "$file_task_filelist" -O "$file_task_subtask2"
+    if [ $? -ne 0 ] ; then
+        mp-log error "create sub-task2 fail, taskseq:[$taskseq], subdsthost2:[$subdsthost2]"
+        exit 1
+    fi
+
+    ## forward sub-task2
+    mp-send -u maopao -H "$subdsthost2" -P "22" -f "$file_task_subtask2"
+    if [ $? -ne 0 ] ; then
+        mp-log error "send sub-task2 fail, taskseq:[$taskseq], subdsthost2:[$subdsthost2]"
+        exit 1
+    fi
+fi
