@@ -7,8 +7,6 @@ using namespace neiku;
 
 int main()
 {
-    CCgx cgi;
-
     // std::string output;
     //int iRet = cgi.Dump(output);
     //LOG_MSG("ret:[%d], output:[%s]", iRet, output.c_str());
@@ -35,7 +33,9 @@ int main()
     //        , cgi.GetValueUI("Query.ui")
     //        , cgi.GetValueUII("Query.uii"));
 
-    cgi.Render("cgi_test.cs");
+    CGX->setValue("key", CGX->getValue("Query.key", ""));
+    CGX->setValue("pid", getpid());
+    CGX->render("cgi_test.cs");
     
     return 0;
 }

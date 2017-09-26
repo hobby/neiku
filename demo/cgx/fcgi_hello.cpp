@@ -3,22 +3,21 @@
 #include <unistd.h>
 #include "neiku/log.h"
 #include "neiku/cgx.h"
-#include "neiku/cgx_main.h"
 
 using namespace neiku;
 
 int main(int argc, char* argv[])
 {
-    cgx_main(argc, argv);
+    CGX->main(argc, argv);
 
-    CCgx *CGX = new CCgx();
-    while (CGX->Accept())
+    while (CGX->accept() >= 0)
     {
-        CGX->SetValue("pid", getpid());
-        int ret = CGX->Render("fcgi_hello.cs");
+        CGX->setValue("key", CGX->getValue("Query.key", "default"));
+        CGX->setValue("pid", getpid());
+        int ret = CGX->render("fcgi_hello.cs");
         if (ret != 0)
         {
-            LOG_MSG("render fail, red:[%d], msg:[%s]", ret, CGX->GetErrMsg());
+            LOG_MSG("render fail, red:[%d], msg:[%s]", ret, CGX->getErrMsg());
         }
     }
 

@@ -16,6 +16,10 @@
  *                    支持自动兼容CGI/FastCGI运行模式
  *                    支持通过nerr_error_traceback获取更多出错现场
  *         2016/10/03 改名为CGX (X=> cgi+fastcgi+cpp)
+ *         2017/09/26 支持单例，方便使用
+ *                    支持<!--#include virtual=""-->方式包含页面片
+ *                    支持直接获取http body自行解析
+ *                    支持json_escape
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -47,59 +51,69 @@
 #include <string>
 #include "ClearSilver.h"
 
+#include "neiku/singleton.h"
+#define CGX SINGLETON(neiku::CgX)
+
 namespace neiku
 {
 
-class CCgx
+class CgX
 {
 
-#define CHECK_INIT(RET) if (!m_bInit && !Init()) { SetErrMsg("cgi util init fail"); return RET; }
+public:
+    CgX();
+    ~CgX();
+
+    void main(int argc, char* argv[]);
+    int accept();
+
+    const char* getErrMsg();
 
 public:
-    CCgx();
-    ~CCgx();
+    const char* getValue(const char* szName, const char* szDefVal = "");
+    int32_t  getValue(const char* szName, int32_t iDefVal = 0);
+    int64_t  getValue(const char* szName, int64_t lDefVal = 0);
+    uint32_t getValue(const char* szName, uint32_t dwDefVal = 0);
+    uint64_t getValue(const char* szName, uint64_t ddwDefVal = 0);
 
-    // true  - new request is ready
-    // false - no more request or internal error
-    bool Accept();
-
-    const char* GetErrMsg();
+    void setValue(const char* szName, int iValue);
+    void setValue(const char* szName, const char* szValue);
+    void setValue(const char* szName, const std::string& sValue);
 
 public:
-    const char* GetValue(const char* szName, const char* szDefVal = "");
-    int32_t  GetValueI(const char* szName, int32_t iDefVal = 0);
-    int64_t  GetValueII(const char* szName, int64_t lDefVal = 0);
-    uint32_t GetValueUI(const char* szName, uint32_t dwDefVal = 0);
-    uint64_t GetValueUII(const char* szName, uint64_t ddwDefVal = 0);
+    void setParseHttpBodyManually(bool bFlag = true);
+    const std::string getHttpBody();
 
-    int SetValue(const char* szName, const char* szValue);
-    int SetValue(const char* szName, int iValue);
+public:
+    std::string getRemoteAddr();
+
+public:
+    void setContentType(const char* szContentType);
 
 public:
     // do not fclose it
-    FILE* GetFile(const char* szName)
-    {
-        CHECK_INIT(NULL);
-        return cgi_filehandle(m_pCGI, szName);
-    }
+    FILE* getFile(const char* szName);
 
 public:
     // 302 to http(s)://domain/path/to/xxx
-    void Redirect302Url(const char* fmt, ...);
+    void redirect302Url(const char* fmt, ...);
     // 302 to /path/to/xxx
-    void Redirect302Uri(const char* fmt, ...);
+    void redirect302Uri(const char* fmt, ...);
 
 public:
-    int Render(const char* szTplPath);
+    int render(const char* szTplPath);
 
 private:
-    bool Init();
-    void Destroy();
+    bool init();
+    void destroy();
 
-    void SetErrMsg(NEOERR* pError);
-    void SetErrMsg(const char* szErrMsg);
+    void setErrMsg(NEOERR* pError);
+    void setErrMsg(const char* szErrMsg);
 
-    int Render(const char* szTplPath, STRING& stOutput);
+    int render(const char* szTplPath, STRING& stOutput);
+
+private:
+    void setValue(const char * pHdfDoc);
 
 private:
     CGI *m_pCGI;
@@ -107,10 +121,11 @@ private:
     std::string m_sLastErrMsg;
 
     bool m_bAccepted;
+
+    bool m_bParseHttpBodyManually;
+    std::string m_sHttpBody;
 };
 
 };
-
-
 
 #endif

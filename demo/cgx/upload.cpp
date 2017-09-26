@@ -7,10 +7,10 @@ using namespace neiku;
 
 int main()
 {
-    CCgx cgi;
+    CgX cgi;
 
-    FILE* fp = cgi.GetFile("file");
-    cgi.SetValue("is_file_exist", fp ? "yes" : "no");
+    FILE* fp = cgi.getFile("file");
+    cgi.setValue("is_file_exist", fp ? "yes" : "no");
 
     int nRead = 0;
     char szBuf[1024] = {0};
@@ -29,7 +29,7 @@ int main()
         }
     }
 
-    cgi.Render("filehandle.cs");
+    cgi.render("filehandle.cs");
     
     return 0;
 }

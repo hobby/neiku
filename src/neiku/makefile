@@ -13,7 +13,7 @@ libneiku.a: charset.o cmdline.o cs.o
 	ar -r $@ $^
 	mkdir -pv $(LIBPATH) && cp -vf $@ $(LIBPATH)
 
-libcgi.a: cgx.o cgx_main.o
+libcgi.a: cgx.o cgx.main.o cgx.file.o
 	ar -r $@ $^
 	mkdir -pv $(LIBPATH) && cp -vf $@ $(LIBPATH)
 
