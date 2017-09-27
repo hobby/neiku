@@ -5,6 +5,9 @@
  * date:   2014/11/23 19:04:00
  * desc:   序列化工具，实现一种较通用、简单的序列化技术
  *         支持字节流(反)序列化、JSON序列化、XML序列化、DB数据序列化
+ *
+ * 对象转字符串: ObjDumper
+ * 转换后字符串：{key}:[{value}], {key}:[{value}]
  */
 
 #ifndef __SERIALIZE_H_
@@ -14,129 +17,131 @@
 #include <string>
 #include <sstream>
 
-#include <neiku/string.h>
-
-#define SERIALIZE(AR, OBJ)  { neiku::CSerializeName oSerializeName(#OBJ); AR & oSerializeName & OBJ; };
-#define OBJDUMP(OBJ)        ( neiku::CObjDumper() << OBJ).str().c_str()
+#define SERIALIZE(T, VAL)  { neiku::Key KEY(#VAL); T & KEY & VAL; };
 
 namespace neiku
 {
 
-/*
-template<T>
-const char* cstr_encode(const T& t)
+class Key
 {
-    return OBJDUMP(t);
-}
-*/
+public:
+    Key(const char* key): _key(key)
+    {}
 
-class CSerializeName
-{
-    public:
-        CSerializeName(const char* pszName)
-        {
-            m_sName.assign(pszName);
-        };
+    const char* c_str()
+    {
+        return _key;
+    };
 
-        std::string& GetName()
-        {
-            return m_sName;
-        };
-
-    public:
-        std::string m_sName;
+public:
+    const char* _key;
 };
 
-class CObjDumper
+template <typename OBJ>
+static std::string& implode(std::string& str
+                            , const std::vector<OBJ>& list
+                            , const char sep = '|')
 {
-    public:
-        CObjDumper()
-        {};
+    std::stringstream sstream;
+    typename std::vector<OBJ>::const_iterator it = list.begin();
+    if (it != list.end())
+    {
+        sstream << *it;
+    }
+    for (++it; it != list.end(); ++it)
+    {
+        sstream << sep << *it;
+    }
+    str = sstream.str();
+    return str;
+};
 
-        CObjDumper& operator & (CSerializeName& oName)
-        {
-            m_sStream << oName.GetName() << ":[";
-            return *this;
-        }
+class ObjDumper
+{
+public:
+    ObjDumper()
+    {};
 
-        CObjDumper& operator & (std::string& sStr)
-        {
-            m_sStream << sStr << "], ";
-            return *this;
-        }
+    ObjDumper& operator & (Key& key)
+    {
+        _keyname = key.c_str();
+        return *this;
+    }
 
-        CObjDumper& operator & (bool bValue)
+    ObjDumper& operator & (std::string& val)
+    {
+        _sstream << _postfix
+                 << _keyname << ":[" << val << "]";
+        if (_postfix.empty())
         {
-            if (bValue == true)
-            {
-                m_sStream << "true], ";
-            }
-            else
-            {
-                m_sStream << "false], ";
-            }
-            return *this;
+            _postfix = ", ";
         }
+        return *this;
+    }
 
-        CObjDumper& operator & (uint32_t dwValue)
+    ObjDumper& operator & (bool val)
+    {
+        _sstream << _postfix
+                 << _keyname
+                 << ":["
+                 << (val ? "true" : "false")
+                 << "]";
+        if (_postfix.empty())
         {
-            m_sStream << dwValue << "], ";
-            return *this;
+            _postfix = ", ";
         }
+        return *this;
+    }
 
-        CObjDumper& operator & (uint64_t ddwValue)
-        {
-            m_sStream << ddwValue << "], ";
-            return *this;
-        }
+#define DUMP_NUM(TYPE) \
+    ObjDumper& operator & (TYPE val) \
+    { \
+        _sstream << _postfix \
+                 << _keyname << ":[" << val << "]"; \
+        if (_postfix.empty()) \
+        { \
+            _postfix = ", "; \
+        } \
+        return *this; \
+    }
 
-        CObjDumper& operator & (int64_t lValue)
-        {
-            m_sStream << lValue << "], ";
-            return *this;
-        }
+    DUMP_NUM(uint32_t)
+    DUMP_NUM(uint64_t)
+    DUMP_NUM(int32_t)
+    DUMP_NUM(int64_t)
 
-        CObjDumper& operator & (int32_t iValue)
-        {
-            m_sStream << iValue << "], ";
-            return *this;
-        }
+    template <typename OBJ>
+    ObjDumper& operator & (std::vector<OBJ>& list)
+    {
+        std::string str;
+        implode(str, list, ',');
+        (*this) & str;
+        return *this;
+    }
 
-        template <typename object_t>
-        CObjDumper& operator & (std::vector<object_t>& vObj)
-        {
-            std::string sStr;
-            STRING->Implode(sStr, vObj, ",");
-            (*this) & sStr;
-            return *this;
-        }
+    template <typename OBJ>
+    ObjDumper& operator & (OBJ& obj)
+    {
+        obj.serialize(*this);
+        return *this;
+    }
 
-        template <typename object_t>
-        CObjDumper& operator & (object_t& obj)
-        {
-            obj.Serialize(*this);
-            return *this;
-        }
-        
-        template <typename object_t>
-        CObjDumper& operator << (object_t& obj)
-        {
-            (*this) & obj;
-            return *this;
-        }
+    template <typename OBJ>
+    ObjDumper& operator << (OBJ& obj)
+    {
+        (*this) & obj;
+        return *this;
+    }
 
-        std::string str()
-        {
-            std::string sStr = m_sStream.str();
-            if (!sStr.empty())
-            {
-                sStr.resize(sStr.size() - 2);
-            }
-            return sStr;
-        }
+    std::string str()
+    {
+        return _sstream.str();
+    }
 
-    private:
-        std::stringstream m_sStream;
+private:
+    const char*       _keyname;
+    std::string       _postfix;
+    std::stringstream _sstream;
 };
 
 };

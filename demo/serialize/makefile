@@ -1,19 +1,14 @@
+include $(shell neiku_config --conf makefile.neiku)
 
+INCS = $(shell neiku_config --incs cgi log)
 
-include ../../makefile.neiku
+LIBS = $(shell neiku_config --libs cgi log)
 
-DIY_INC = -I ../../include/ \
-		  -I ../../3rd/ \
-
-DIY_LIB = -L ../../3rd/lib64/ -ljsoncpp \
-
-VPATH = 
-
-OUTPUT = test_json_serialize
+OUTPUT = test_obj_serialize
 
 ALL: $(OUTPUT)
 
-test_json_serialize:test_json_serialize.o 
+test_obj_serialize: test_obj_serialize.o
 
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so
