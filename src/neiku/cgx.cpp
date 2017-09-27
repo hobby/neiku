@@ -353,7 +353,7 @@ void CgX::redirect302Url(const char* fmt, ...)
 
     va_list ap;
     va_start(ap, fmt);
-    cgi_vredirect(m_pCGI, 0, fmt, ap);
+    cgi_vredirect(m_pCGI, 1, fmt, ap);
     va_end(ap);
 }
 
@@ -364,7 +364,7 @@ void CgX::redirect302Uri(const char* fmt, ...)
 
     va_list ap;
     va_start(ap, fmt);
-    cgi_vredirect(m_pCGI, 1, fmt, ap);
+    cgi_vredirect(m_pCGI, 0, fmt, ap);
     va_end(ap);
 }
 
