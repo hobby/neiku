@@ -8,6 +8,9 @@
  *
  * 对象转字符串: ObjDumper
  * 转换后字符串：{key}:[{value}], {key}:[{value}]
+ *
+ * 对像转HDF: HdfDumper
+ * 转换后字符串: {key} = {value} \n 或者 {key} { \n objkey1 = objval1 \n } \n
  */
 
 #ifndef __SERIALIZE_H_
@@ -16,6 +19,7 @@
 #include <stdint.h>
 #include <string>
 #include <sstream>
+#include <vector>
 
 #define SERIALIZE(T, VAL)  { neiku::Key KEY(#VAL); T & KEY & VAL; };
 
@@ -59,7 +63,7 @@ static std::string& implode(std::string& str
 class ObjDumper
 {
 public:
-    ObjDumper()
+    ObjDumper(): _keyname("")
     {};
 
     ObjDumper& operator & (Key& key)
@@ -93,7 +97,7 @@ public:
         return *this;
     }
 
-#define DUMP_NUM(TYPE) \
+#define OBJDUMP_NUM(TYPE) \
     ObjDumper& operator & (TYPE val) \
     { \
         _sstream << _postfix \
@@ -105,10 +109,10 @@ public:
         return *this; \
     }
 
-    DUMP_NUM(uint32_t)
-    DUMP_NUM(uint64_t)
-    DUMP_NUM(int32_t)
-    DUMP_NUM(int64_t)
+    OBJDUMP_NUM(uint32_t)
+    OBJDUMP_NUM(uint64_t)
+    OBJDUMP_NUM(int32_t)
+    OBJDUMP_NUM(int64_t)
 
     template <typename OBJ>
     ObjDumper& operator & (std::vector<OBJ>& list)
@@ -136,6 +140,96 @@ public:
     std::string str()
     {
         return _sstream.str();
+    }
+
+private:
+    const char*       _keyname;
+    std::string       _postfix;
+    std::stringstream _sstream;
+};
+
+class HdfDumper
+{
+public:
+    HdfDumper(const char* hdfname = ""): _keyname(hdfname)
+    {};
+
+    HdfDumper& operator & (Key& key)
+    {
+        _keyname = key.c_str();
+        return *this;
+    }
+
+    std::string str()
+    {
+        return _sstream.str();
+    }
+
+public:
+
+#define HDFDUMP_NUM(TYPE) \
+    HdfDumper& operator & (TYPE val) \
+    { \
+        _sstream << _keyname << "=" << val << "\n"; \
+        return *this; \
+    }
+
+    HDFDUMP_NUM(uint32_t)
+    HDFDUMP_NUM(uint64_t)
+    HDFDUMP_NUM(int32_t)
+    HDFDUMP_NUM(int64_t)
+
+    HdfDumper& operator & (std::string& val)
+    {
+        _sstream << _keyname << "=" << val << "\n";
+        return *this;
+    }
+
+    HdfDumper& operator & (bool val)
+    {
+        _sstream << _keyname << "=" << (val ? "true" : "false") << "\n";
+        return *this;
+    }
+
+    template <typename OBJ>
+    HdfDumper& operator & (std::vector<OBJ>& list)
+    {
+        if (list.empty())
+        {
+            return *this;
+        }
+
+        const char* keyname = _keyname;
+        _sstream << _keyname << "{\n";
+
+        uint32_t index = 0;
+        typename std::vector<OBJ>::iterator it = list.begin();
+        for (; it != list.end(); ++it)
+        {
+            _keyname = "";
+            _sstream << index++;
+            *this & *it;
+        }
+
+        _keyname = keyname;
+        _sstream << "}\n";
+        return *this;
+    }
+
+    template <typename OBJ>
+    HdfDumper& operator & (OBJ& obj)
+    {
+        _sstream << _keyname << "{\n";
+        obj.serialize(*this);
+        _sstream << "}\n";
+        return *this;
+    }
+
+    template <typename OBJ>
+    HdfDumper& operator << (OBJ& obj)
+    {
+        (*this) & obj;
+        return *this;
     }
 
 private:

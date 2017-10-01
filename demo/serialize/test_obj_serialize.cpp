@@ -42,7 +42,7 @@ int main(int argc, char* argv[])
     person.name = "YIF";
     person.addr = "SZ";
     person.wechat = "WX2";
-    person.flag = true;
+    person.flag = false;
     person.list.push_back(1);
     person.list.push_back(2);
     person.list.push_back(3);
@@ -54,5 +54,10 @@ int main(int argc, char* argv[])
     dumper << person;
     std::string str = dumper.str();
     LOG_MSG("str => %s", str.c_str());
+
+    HdfDumper hdf_dumper("data");
+    hdf_dumper << person;
+    std::string hdf = hdf_dumper.str();
+    LOG_MSG("hdf => %s", hdf.c_str());
     return 0;
 }
