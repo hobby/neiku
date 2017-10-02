@@ -1,7 +1,7 @@
 
 /*
- * file:   yaf/serialize.h
- * author: yifee
+ * file:   neiku/serialize.h
+ * author: YIF
  * date:   2014/11/23 19:04:00
  * desc:   序列化工具，实现一种较通用、简单的序列化技术
  *         支持字节流(反)序列化、JSON序列化、XML序列化、DB数据序列化
@@ -181,7 +181,14 @@ public:
 
     HdfDumper& operator & (std::string& val)
     {
-        _sstream << _keyname << "=" << val << "\n";
+        if (val.find_first_of('\n') != std::string::npos)
+        {
+            _sstream << _keyname << "<<EOM\n" << val << "\nEOM\n";
+        }
+        else
+        {
+            _sstream << _keyname << "=" << val << "\n";
+        }
         return *this;
     }
 
