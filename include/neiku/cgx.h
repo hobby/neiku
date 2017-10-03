@@ -20,6 +20,7 @@
  *                    支持<!--#include virtual=""-->方式包含页面片
  *                    支持直接获取http body自行解析
  *                    支持json_escape
+ *         2017/10/03 支持setValue任意对象
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -51,11 +52,14 @@
 #include <string>
 #include "ClearSilver.h"
 
+#include "neiku/serialize.h"
 #include "neiku/singleton.h"
 #define CGX SINGLETON(neiku::CgX)
 
 namespace neiku
 {
+
+#define CHECK_INIT(RET) if (!m_bInit && !init()) { setErrMsg("cgx init fail"); return RET; }
 
 class CgX
 {
@@ -79,6 +83,16 @@ public:
     void setValue(const char* szName, int iValue);
     void setValue(const char* szName, const char* szValue);
     void setValue(const char* szName, const std::string& sValue);
+
+    template<typename OBJ>
+    void setValue(const char* szName, OBJ& obj)
+    {
+        CHECK_INIT();
+
+        HdfDumper dumper(szName);
+        dumper << obj;
+        hdf_read_string_ignore(m_pCGI->hdf, dumper.str().c_str(), 1);
+    }
 
 public:
     void setParseHttpBodyManually(bool bFlag = true);

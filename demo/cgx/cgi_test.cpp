@@ -19,7 +19,10 @@ int main()
     //int ret = cgi.Render("template.cs");
     //LOG_MSG("ret:[%d], msg:[%s]", ret, cgi.GetErrMsg());
 
-    //cgi.Redirect302Url("%s", "/");
+    std::string urx = CGX->getValue("Query.urx", "/");
+    LOG_MSG("urx:[%s]", urx.c_str());
+    CGX->redirect302Url("%s", urx.c_str());
+    CGX->redirect302Uri("%s", urx.c_str());
 
     //cgi.Redirect302Uri("%s", "/");
 
@@ -33,9 +36,9 @@ int main()
     //        , cgi.GetValueUI("Query.ui")
     //        , cgi.GetValueUII("Query.uii"));
 
-    CGX->setValue("key", CGX->getValue("Query.key", ""));
-    CGX->setValue("pid", getpid());
-    CGX->render("cgi_test.cs");
+    // CGX->setValue("key", CGX->getValue("Query.key", ""));
+    // CGX->setValue("pid", getpid());
+    // CGX->render("cgi_test.cs");
     
     return 0;
 }
