@@ -1,5 +1,6 @@
 // vim:ts=4:sw=4:expandtab
 
+#include <sys/stat.h>
 #include <string.h>
 #include <stdlib.h>
 #include <string>
@@ -502,6 +503,15 @@ int CgX::render(const char* szTplPath, STRING& stOutput)
         return 0;
     }
 
+    // no template no 50x
+    struct stat st;
+    int iRet = stat(szTplPath, &st);
+    if (iRet != 0)
+    {
+        string_append(&stOutput, "template not found");
+        return 0;
+    }
+
     // render with template
     CSPARSE* pParse = NULL;
     NEOERR* pError = cs_init(&pParse, m_pCGI->hdf);
@@ -511,7 +521,7 @@ int CgX::render(const char* szTplPath, STRING& stOutput)
         return -1;
     }
 
-    int iRet = -1;
+    iRet = -1;
     do
     {
         cs_register_fileload(pParse, NULL, HandleSSI);
