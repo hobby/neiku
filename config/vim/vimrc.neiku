@@ -125,4 +125,10 @@ hi cursorline cterm=underline
 hi cursorcolumn ctermbg=red ctermfg=black
 
 " 显示制表符(^I)、换行符($)
-set list
+" set list
+
+"显示行号
+set number
+
+" 自动识别文件编码
+set fileencodings=utf-8,chinese

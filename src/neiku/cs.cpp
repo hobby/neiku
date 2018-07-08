@@ -47,6 +47,17 @@ int neiku::CCS::Destroy()
     return 0;
 }
 
+const char* neiku::CCS::GetValue(const char* szName, const char* szDefVal)
+{
+    if(m_bInit == false)
+    {
+        SetErrMsg("cs util not init");
+        return szDefVal;
+    }
+
+    return hdf_get_value(m_pHDF, szName, szDefVal);
+}
+
 int neiku::CCS::SetValue(const char* szName, const char* szValue)
 {
     if(m_bInit == false)
@@ -56,6 +67,24 @@ int neiku::CCS::SetValue(const char* szName, const char* szValue)
     }
 
     NEOERR* pError = hdf_set_value(m_pHDF, szName, szValue);
+    if(pError != STATUS_OK)
+    {
+        SetErrMsg(pError);
+        return -1;
+    }
+
+    return 0;
+}
+
+int neiku::CCS::SetValueHDF(const char* szHDF)
+{
+    if(m_bInit == false)
+    {
+        SetErrMsg("cs util not init");
+        return -1;
+    }
+
+    NEOERR* pError = hdf_read_string(m_pHDF, szHDF);
     if(pError != STATUS_OK)
     {
         SetErrMsg(pError);

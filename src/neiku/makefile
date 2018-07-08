@@ -7,6 +7,8 @@ LIBPATH = $(shell neiku_config --conf neiku.libpath)
 
 OUTPUT = libneiku.a libcgi.a
 
+OUTPUT = libcgi.a
+
 ALL: $(OUTPUT)
 
 libneiku.a: charset.o cmdline.o cs.o

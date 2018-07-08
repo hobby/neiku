@@ -32,7 +32,11 @@ public:
 public:
     int Init();
     
+    const char* GetValue(const char* szName, const char* szDefVal);
+
     int SetValue(const char* szName, const char* szValue);
+
+    int SetValueHDF(const char* szHDF);
     
     int Dump(std::string& sOutput);
     

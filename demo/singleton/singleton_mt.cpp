@@ -12,6 +12,8 @@ void* thread_entry(void*)
     {
         TEST->Do();
     }
+
+    return NULL;
 }
 
 int main(int argc, char **argv)

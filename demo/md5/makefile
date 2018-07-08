@@ -1,11 +1,7 @@
+include ../../makefile.neiku
 
-
-include ../..//makefile.neiku
-
-DIY_INC= 
-
-DIY_LIB=
-
+INCS =  -I../../include
+LIBS =
 VPATH= ../../src/neiku/
 
 OUTPUT=md5_test

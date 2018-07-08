@@ -1,10 +1,8 @@
+include $(shell neiku_config --conf neiku.home)/makefile.neiku
 
+INCS = $(shell neiku_config --incs log)
 
-include ../../makefile.neiku
-
-DIY_INC = -I../../include/ \
-
-DIY_LIB =
+LIBS = $(shell neiku_config --libs log)
 
 VPATH = 
 

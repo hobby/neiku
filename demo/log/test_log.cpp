@@ -1,6 +1,8 @@
 
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 #include <neiku/log.h>
+#include <string>
 
 void test_func()
 {

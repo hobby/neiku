@@ -16,6 +16,14 @@ int main()
     cs.SetValue("user.name", "YIF");
     cs.SetValue("user.desc", "line1\nline2\r\n");
 
+    std::string HDF;
+    //HDF.append("hdf=   value for hdf!\n");
+    HDF.append("hdf.0 << EOM\nvalue for hdf.0! \nand this is anther line\nEOM\n");
+    HDF.append("hdf.1 = this is value for hdf.1\n");
+    HDF.append("hdf.2=   value for hdf.2!\n");
+    
+    cs.SetValueHDF(HDF.c_str());
+
     std::string sResult;
     ret = cs.Render("./template.cs", sResult);
     if(ret == 0)
@@ -28,6 +36,8 @@ int main()
     LOG_MSG("dump => [\n%s]", sDump.c_str());
 
 
+    LOG_MSG("hdf:[%s]", cs.GetValue("hdf", "unknow"));
+    LOG_MSG("hdf.0:[%s]", cs.GetValue("hdf.0", "unknow"));
 
     return 0;
 }

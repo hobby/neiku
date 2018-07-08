@@ -1,8 +1,8 @@
 
 
-include ../../makefile.neiku
+include $(shell neiku_config --conf neiku.home)/makefile.neiku
 
-DIY_INC = -I../../include/ \
+DIY_INC = $(shell neiku_config --incs charset)
 
 DIY_LIB = -lneiku
 

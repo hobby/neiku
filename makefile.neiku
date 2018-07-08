@@ -49,9 +49,9 @@ VPATH += ${SRCS} # make内置的源文件目录配置
 .o.so:
 	g++ -fPIC -shared -o lib$@ $^ ${LIBS}
 .c.o:
-	gcc -g -fPIC -Wall -c $^ ${INCS}
+	gcc -g -fPIC -Wall -o $@ -c $^ ${INCS}
 .cpp.o:
-	g++ -g -fPIC -Wall -c $^ ${INCS}
+	g++ -g -fPIC -Wall -o $@ -c $^ ${INCS}
 .o:
 	g++ -g -o $@ $^ ${LIBS}
 

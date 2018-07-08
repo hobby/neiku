@@ -13,6 +13,7 @@ void* thread_entry(void* pArg)
         printf("thread:[%s], number:[%d]\n"
                , (char*)pArg, TSDTEST->GetNumber());
     }
+    return NULL;
 }
 
 void func()
