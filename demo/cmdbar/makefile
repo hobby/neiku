@@ -11,6 +11,11 @@ CMD_OBJS = $(CMD_CPPS:%.cpp=%.o)
 ALL: $(OUTPUT)
 cmdbar_test: cmdbar_test.o $(CMD_OBJS) cmdbar.h
 
+run:
+	@make clean
+	@make
+	@./cmdbar_test || echo
+
 clean:
 	rm -f $(OUTPUT) *.o *.a *.so $(CMD_OBJS)
 

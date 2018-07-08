@@ -17,11 +17,9 @@ CMDBAR_CMD_TYPE cmd1()
 
 CMDBAR_INIT_TYPE init()
 {
-    LOG_MSG("regist hello cmd, address:[%p]", hello);
-    cmdbar::regist("hello", hello /*参数列表，拉位置映射*/);
-    cmdbar::regist("cmd1", cmd1);
-    cmdbar::regist("cmd1", cmd1);
-    cmdbar::regist(NULL, cmd1);
-    cmdbar::regist("cmd2", NULL);
+    cmdbar::registCmd("hello", hello, "cmdbar hello command");
+
+    cmdbar::registCmd("cmd1", cmd1, "cmd1 in hello.cpp");
+
     return 0;
 }
