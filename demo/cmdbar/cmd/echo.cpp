@@ -18,8 +18,8 @@ CMDBAR_CMD_TYPE cmd()
 
 CMDBAR_INIT_TYPE init()
 {
-    cmdbar::registCmd("echo", cmd, "echo command");
-    cmdbar::registOpt("echo", message);
+    // cmdbar::registCmd("echo", cmd, "echo command");
+    // cmdbar::registOpt("echo", message);
 
     return 0;
 }

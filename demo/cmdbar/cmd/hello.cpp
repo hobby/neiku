@@ -17,9 +17,9 @@ CMDBAR_CMD_TYPE cmd1()
 
 CMDBAR_INIT_TYPE init()
 {
-    cmdbar::registCmd("hello", hello, "cmdbar hello command");
+    // cmdbar::registCmd("hello", hello, "cmdbar hello command");
 
-    cmdbar::registCmd("cmd1", cmd1, "cmd1 in hello.cpp");
+    // cmdbar::registCmd("cmd1", cmd1, "cmd1 in hello.cpp");
 
     return 0;
 }
