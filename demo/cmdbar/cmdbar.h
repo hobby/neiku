@@ -2,6 +2,8 @@
 #ifndef __NK_CMDBAR_H__
 #define __NK_CMDBAR_H__
 
+#include <assert.h>
+#include <inttypes.h>
 #include <cstddef>
 #include <cstdarg>
 #include <cstdio>
@@ -48,6 +50,55 @@ public:
     
     // 命令入口原型
     typedef int (*Routine)();
+
+public:
+    template<typename T>
+    static T& getRef()
+    {
+        static T t;
+        return t;
+    }
+
+    template<typename T>
+    static T getVal(const std::string& key)
+    {
+        T val;
+        _copyVal(key, val);
+        return val;
+    }
+
+    template<typename T>
+    static T getVal(const char* key)
+    {
+        assert(key != NULL);
+        return getVal<T>(std::string(key));
+    }
+
+private:
+    static void _copyVal(const std::string& key, std::string& val)
+    {
+        val = "";
+        std::map<std::string, const char*>::iterator itOpt = me()->_CmdOptionPtrMap.find(key);
+        if (itOpt != me()->_CmdOptionPtrMap.end() && itOpt->second != NULL)
+        {
+            val = std::string(itOpt->second);
+        }
+    }
+
+    #define _COPYVAL4NUM(TYPE, FUNC) static void _copyVal(const std::string& key, TYPE& val) \
+    { \
+        val = 0; \
+        std::map<std::string, const char*>::iterator itOpt = me()->_CmdOptionPtrMap.find(key); \
+        if (itOpt != me()->_CmdOptionPtrMap.end() && itOpt->second != NULL) \
+        { \
+            val = FUNC(itOpt->second, NULL, 0); \
+        } \
+    }
+
+    _COPYVAL4NUM(int32_t, strtol)
+    _COPYVAL4NUM(int64_t, strtoll)
+    _COPYVAL4NUM(uint32_t, strtoul)
+    _COPYVAL4NUM(uint64_t, strtoull)
 
 public:
     cmdbar(): _good(true){}
@@ -116,6 +167,9 @@ public:
                     opt._good = true;
                     if (opt._type == 1) *(opt._StrPtr) = argv[idx];
                     if (opt._type == 2) *(opt._IntPtr) = strtol(argv[idx], NULL, 0);
+
+                    me()->_CmdOptionPtrMap[opt._key] = argv[idx];
+
                     idx++;
                 }
             }
@@ -316,6 +370,7 @@ private:
     std::map<std::string, Routine>                        _CmdRoutineMap;
     std::map<std::string, std::string>                _CmdDescriptionMap;
     std::map< std::string, std::vector<CmdOption> >    _CmdOptionListMap;
+    std::map<std::string, const char*>                  _CmdOptionPtrMap;
 };
 
 #endif
