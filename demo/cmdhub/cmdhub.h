@@ -1,9 +1,11 @@
 // vim:ts=4:sw=4:expandtab
-#ifndef __NK_CMDBAR_H__
-#define __NK_CMDBAR_H__
+#ifndef __NK_CMDHUB_H__
+#define __NK_CMDHUB_H__
 
+#include <unistd.h>
 #include <assert.h>
 #include <inttypes.h>
+#include <string.h>
 #include <cstddef>
 #include <cstdarg>
 #include <cstdio>
@@ -12,22 +14,26 @@
 #include <string>
 #include <vector>
 
-// cmdbar辅助类型
-#define CMDBAR_CMD_TYPE static int                               // 命令字入口类型（一个命令字源文件可包含多个命令字，建议保持1个）
-#define CMDBAR_INIT_TYPE static __attribute__((constructor)) int // 命令字初始化类型（一个命令字源文件可以有多个初始化过程，建议保持1个）
+// cmdhub辅助类型
+#define CMDHUB_CMD_TYPE static int                               // 命令执行入口类型
+#define CMDHUB_INIT_TYPE static __attribute__((constructor)) int // 命令初始化入口类型
+
+// cmdhub日志工具
+#define CMDHUB_ERROR(fmt, args...) printf("[%s:%d] %s: "fmt"\n", __FILE__, __LINE__, cmdhub::logLabel(1), ##args) // 错误日志
+#define CMDHUB_INFO(fmt, args...)  printf("[%s:%d] %s: "fmt"\n", __FILE__, __LINE__, cmdhub::logLabel(2), ##args) // 提示日志
+#define CMDHUB_DEBUG(fmt, args...) printf("[%s:%d] %s: "fmt"\n", __FILE__, __LINE__, cmdhub::logLabel(3), ##args) // 调试日志
 
 // 结构体乱序赋值（C++）出现：不支持（网上很多说明，只有c支持，c++要c++14可能会支持，但其实跟编译器有关系）
 // https://www.systutorials.com/241133/g-sorry-unimplemented-non-trivial-designated-initializers-not-supported/
 // 关键：乱序目标是知道值赋给了哪个字段，只要字段顺序与定义顺序一致，是可以的（g++ 4.8.5）
 
-class cmdbar
+class cmdhub
 {
 public:
-    cmdbar(): _good(true){}
 
     typedef int (*Routine)();
 
-    struct Cmd
+    struct Cmd /* Command */
     {
         // 不能有构造函数，否则乱序赋值方式编不过
 
@@ -35,7 +41,7 @@ public:
         const char*  desc;      // 命令描述
     };
 
-    struct CmdOption
+    struct Opt /* Option */
     {
         const char*  name;      // 选项名字
         const char*  desc;      // 选项描述
@@ -45,10 +51,26 @@ public:
     };
 
 public:
-    // 启动命令行
-    static int launch(int argc, char* argv[])
+    // 设置全局初始化入口（解析命令行参数之后，执行命令之前）
+    #define ready(callback) doReady(callback, #callback, __FILE__, __LINE__)
+
+    static cmdhub& doReady(Routine callback, const char* name, const char* file, int line)
     {
-        cmdbar* _this = me();
+        cmdhub* _this = me();
+        _this->_readyCallbackPtr = callback;
+        _this->_readyCallbackName = name;
+        _this->_readyCallbackFile = file;
+        _this->_readyCallbackLine = line;
+        return *_this;
+    }
+
+public:
+    // 启动命令行
+    #define launch(argc, argv)  doLaunch(argc, argv)
+
+    static int doLaunch(int argc, char* argv[])
+    {
+        cmdhub* _this = me();
 
         if (!_this->_good)
         {
@@ -98,7 +120,7 @@ public:
         }
 
         // 参数填充及检测是否没填`必填参数`
-        std::map< std::string, std::vector<CmdOption> >::iterator opts = _this->_CmdOptionListMap.find(name);
+        std::map< std::string, std::vector<Opt> >::iterator opts = _this->_CmdOptionListMap.find(name);
         if (opts != _this->_CmdOptionListMap.end())
         {
             // 填充参数
@@ -107,7 +129,7 @@ public:
             {
                 if (idx < argc)
                 {
-                    CmdOption &opt = opts->second[i];
+                    Opt &opt = opts->second[i];
                     opt._good = true;
                     _this->_CmdOptionPtrMap[opt.name] = argv[idx];
                     idx++;
@@ -117,12 +139,25 @@ public:
             // 检测是否没填`必填参数`
             for (size_t i = 0; i < opts->second.size(); ++i)
             {
-                CmdOption &opt = opts->second[i];
+                Opt &opt = opts->second[i];
                 if (!opt.optional && !opt._good)
                 {
                     _this->printError("Error: '%s' is required for '%s' command\n", opt.name, name.c_str());
                     return 1;
                 }
+            }
+        }
+
+        // 执行全局初始化（业务自定义）
+        if (_this->_readyCallbackPtr != NULL)
+        {
+            int ret = _this->_readyCallbackPtr();
+            if (ret != 0)
+            {
+                _this->printPanic("Panic: ready faild for command, ret:[%d], callback:[%s], code:[%s:%d]\n"
+                                  , ret, _this->_readyCallbackName.c_str()
+                                  , _this->_readyCallbackFile.c_str(), _this->_readyCallbackLine);
+                return -1;
             }
         }
 
@@ -133,12 +168,12 @@ public:
 
 public:
     // 注册命令、选项，支持链式操作
-    // 例如：cmdbar::addCmd(Cmd{}).addOpt(CmdOption{}).addOpt(CmdOption{});
+    // 例如：cmdhub::addCmd(Cmd{}).addOpt(Opt{}).addOpt(Opt{});
     #define addCmd(CMD, args...)  doAddCmd(__FILE__, __LINE__, CMD, ##args)
 
-    static cmdbar& doAddCmd(const char* file, int line, cmdbar::Cmd cmd)
+    static cmdhub& doAddCmd(const char* file, int line, cmdhub::Cmd cmd)
     {
-        cmdbar* _this = me();
+        cmdhub* _this = me();
 
         if (file == NULL || cmd.exec == NULL)
         {
@@ -166,7 +201,7 @@ public:
         return *_this;
     }
 
-    cmdbar& addOpt(cmdbar::CmdOption opt)
+    cmdhub& addOpt(cmdhub::Opt opt)
     {
         if (opt.name == NULL || opt.name[0] == 0)
         {
@@ -180,7 +215,7 @@ public:
             opt.desc = "";
         }
 
-        std::vector<CmdOption> &opts = _CmdOptionListMap[_lastAddedCmdName];
+        std::vector<Opt> &opts = _CmdOptionListMap[_lastAddedCmdName];
         opts.push_back(opt);
         return *this;
     }
@@ -208,10 +243,44 @@ public:
         return getVal<T>(std::string(name));
     }
 
+public:
+    static const char* logLabel(int level)
+    {
+        assert(1 <= level && level <= 3);
+
+        static const char* _label4terminal[] = {
+            "",
+            "\033[31;1mERROR\033[0m",
+            "\033[32;1mINFO\033[0m",
+            "\033[35;1mDEBUG\033[0m",
+        };
+
+        static const char* _label4file[] = {
+            "",
+            "ERROR",
+            "INFO",
+            "DEBUG",
+        };
+
+        static int _isatty = 0;
+        static bool _checktty = false;
+        if (!_checktty)
+        {
+            _checktty = true;
+            _isatty = isatty(STDOUT_FILENO);
+        }
+
+        if (_isatty)
+        {
+            return _label4terminal[level];
+        }
+        return _label4file[level];
+    }
+
 private:
     static void _copyVal(const std::string& name, std::string& value)
     {
-        cmdbar* _this = me();
+        cmdhub* _this = me();
         value = "";
         std::map<std::string, const char*>::iterator itOpt = _this->_CmdOptionPtrMap.find(name);
         if (itOpt != _this->_CmdOptionPtrMap.end() && itOpt->second != NULL)
@@ -222,7 +291,7 @@ private:
 
     #define _COPYVAL4NUM(TYPE, FUNC) static void _copyVal(const std::string& name, TYPE& value) \
     { \
-        cmdbar* _this = me(); \
+        cmdhub* _this = me(); \
         value = 0; \
         std::map<std::string, const char*>::iterator itOpt = _this->_CmdOptionPtrMap.find(name); \
         if (itOpt != _this->_CmdOptionPtrMap.end() && itOpt->second != NULL) \
@@ -243,11 +312,27 @@ private:
         printf("  %s < [ <command> <options> | <options> ] >\n", _CmdName.c_str());
         printf("\n");
         
+        // 计算最长名字的长度，用于打印help填充对齐
+        size_t longestCmdName = 0;
+        for (std::map<std::string, Routine>::iterator it = _CmdRoutineMap.begin();
+             it != _CmdRoutineMap.end(); ++it)
+        {
+            if (longestCmdName < it->first.size())
+            {
+                longestCmdName = it->first.size();
+            }
+        }
+
         printf("Available Commands:\n");
         for (std::map<std::string, Routine>::iterator it = _CmdRoutineMap.begin();
              it != _CmdRoutineMap.end(); ++it)
         {
-            printf("  %s\t\t%s\n", it->first.c_str(), _CmdDescriptionMap[it->first].c_str());
+            std::string padding;
+            if (it->first.size() < longestCmdName)
+            {
+                padding.append(longestCmdName - it->first.size(), ' ');
+            }
+            printf("  %s%s  %s\n", it->first.c_str(), padding.c_str(), _CmdDescriptionMap[it->first].c_str());
         }
         printf("\n");
 
@@ -255,12 +340,18 @@ private:
         for (std::map<std::string, Routine>::iterator it = _CmdRoutineMap.begin();
              it != _CmdRoutineMap.end(); ++it)
         {
-            printf("  %s %s\t", _CmdName.c_str(), it->first.c_str());
-            std::vector<CmdOption> &opts = _CmdOptionListMap[it->first];
+            std::string padding;
+            if (it->first.size() < longestCmdName)
+            {
+                padding.append(longestCmdName - it->first.size(), ' ');
+            }
+            printf("  %s %s%s ", _CmdName.c_str(), it->first.c_str(), padding.c_str());
+
+            std::vector<Opt> &opts = _CmdOptionListMap[it->first];
             for (size_t i = 0; i < opts.size(); ++i)
             {
-                CmdOption &opt = opts[i];
-                if (opt.optional)
+                Opt &opt = opts[i];
+                if (!opt.optional)
                 {
                     printf(" <%s>", opt.name);
                 }
@@ -278,13 +369,25 @@ private:
 
     void printHelp4Cmd(const std::string& name)
     {
-        printf("Usage:\n");
-        printf("  %s %s", _CmdName.c_str(), name.c_str());
-        std::vector<CmdOption> &opts = _CmdOptionListMap[name];
+        // 计算最长名字的长度，用于打印help填充对齐
+        std::vector<Opt> &opts = _CmdOptionListMap[name];
+        size_t longestOptName = 0;
         for (size_t i = 0; i < opts.size(); ++i)
         {
-            CmdOption &opt = opts[i];
-            if (opt.optional)
+            Opt &opt = opts[i];
+            size_t len = strlen(opt.name);
+            if (longestOptName < len)
+            {
+                longestOptName = len;
+            }
+        }
+
+        printf("Usage:\n");
+        printf("  %s %s", _CmdName.c_str(), name.c_str());
+        for (size_t i = 0; i < opts.size(); ++i)
+        {
+            Opt &opt = opts[i];
+            if (!opt.optional)
             {
                 printf(" <%s>", opt.name);
             }
@@ -298,8 +401,14 @@ private:
         printf("Available Options:\n");
         for (size_t i = 0; i < opts.size(); ++i)
         {
-            CmdOption &opt = opts[i];
-            printf(" %s\t%s (%s)\n", opt.name, opt.desc, (!opt.optional?"required":"optional"));
+            Opt &opt = opts[i];
+            size_t len = strlen(opt.name);
+            std::string padding;
+            if (len < longestOptName)
+            {
+                padding.append(longestOptName - len, ' ');
+            }
+            printf(" %s%s  %s  (%s)\n", opt.name, padding.c_str(), opt.desc, (!opt.optional?"required":"optional"));
         }
     }
 
@@ -333,10 +442,15 @@ private:
     }
 
 private:
-    static cmdbar* me()
+    cmdhub(): _good(true), _readyCallbackPtr(NULL), _readyCallbackLine(0) {}
+    cmdhub(const cmdhub&);
+    cmdhub& operator=(const cmdhub&);
+    ~cmdhub(){}
+
+    static cmdhub* me()
     {
-        static cmdbar bar;
-        return &bar;
+        static cmdhub hub;
+        return &hub;
     }
 
     std::string getFileName(const std::string& path)
@@ -354,10 +468,15 @@ private:
     std::string                                                 _CmdName;
     std::map<std::string, Routine>                        _CmdRoutineMap;
     std::map<std::string, std::string>                _CmdDescriptionMap;
-    std::map< std::string, std::vector<CmdOption> >    _CmdOptionListMap;
+    std::map< std::string, std::vector<Opt> >          _CmdOptionListMap;
     std::map<std::string, const char*>                  _CmdOptionPtrMap;
 
     std::string                                        _lastAddedCmdName;
+
+    Routine                                            _readyCallbackPtr;
+    std::string                                       _readyCallbackName;
+    std::string                                       _readyCallbackFile;
+    int                                               _readyCallbackLine;
 };
 
 #endif

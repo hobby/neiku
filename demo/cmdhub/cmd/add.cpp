@@ -1,17 +1,17 @@
 #include <cstdio>
-#include "cmdbar.h"
+#include "cmdhub.h"
 
-CMDBAR_CMD_TYPE cmd()
+CMDHUB_CMD_TYPE cmd()
 {
-    int lhs = cmdbar::getVal<int>("lhs");
-    int rhs = cmdbar::getVal<int>("rhs");
+    int lhs = cmdhub::getVal<int>("lhs");
+    int rhs = cmdhub::getVal<int>("rhs");
     printf("lhs:[%d], rhs:[%d], sum:[%d]\n", lhs, rhs, lhs+rhs);
     return 0;
 }
 
-CMDBAR_INIT_TYPE init()
+CMDHUB_INIT_TYPE init()
 {
-    cmdbar::addCmd({
+    cmdhub::addCmd({
                 exec: cmd,
                 desc: "两个数相加，lhs是必填参数，rhs是可选参数"
             })
