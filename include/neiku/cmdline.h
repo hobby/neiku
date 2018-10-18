@@ -180,7 +180,7 @@ class CCmdLine
 
         /********************** 自动提取选项数据(序列化技术) ***********************/
     public:
-        CCmdLine& operator & (CSerializeName& oName);
+        CCmdLine& operator & (Key& key);
         CCmdLine& operator & (std::string& sValue);
         CCmdLine& operator & (bool& bValue);
         CCmdLine& operator & (int32_t& iValue);

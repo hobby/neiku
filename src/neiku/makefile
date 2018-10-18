@@ -1,13 +1,10 @@
-
 include $(shell neiku_config --conf makefile.neiku clearsilver-cgi fcgi)
 
-INCS = $(shell neiku_config --incs charset cmdline clearsilver-cgi fcgi)
+INCS += $(shell neiku_config --incs charset cmdline clearsilver-cgi fcgi)
 
 LIBPATH = $(shell neiku_config --conf neiku.libpath)
 
 OUTPUT = libneiku.a libcgi.a
-
-OUTPUT = libcgi.a
 
 ALL: $(OUTPUT)
 

@@ -494,10 +494,10 @@ int CCmdLine::ParseCmdLine(int iArgc, char** pArgv)
 }
 
 /********************** 自动提取选项数据(序列化技术) beg ***********************/
-CCmdLine& CCmdLine::operator & (CSerializeName& oName)
+CCmdLine& CCmdLine::operator & (Key& key)
 {
     m_sOptName = "--";
-    m_sOptName.append(oName.GetName());
+    m_sOptName.append(key.c_str());
     return *this;
 }
 
