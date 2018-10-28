@@ -43,10 +43,7 @@
 #include <map>
 
 #include "jsoncpp/jsoncpp.h"
-
-#ifndef SERIALIZE
-#define SERIALIZE(ar, obj) { ar & #obj & obj; }
-#endif
+#include "neiku/serialize.h"
 
 #define json_encode(obj)      ((neiku::CJsonEncoder() << obj).str().c_str())
 #define json_encode_ml(obj)   ((neiku::CJsonEncoderMl() << obj).str().c_str())
@@ -75,16 +72,16 @@ class CJsonEncoder
         }
 
 	public:
-        CJsonEncoder& operator & (const char* szKeyName)
+        CJsonEncoder& operator & (Key& key)
         {
             if (m_bIsFirstKey)
             {
                 m_bIsFirstKey = false;
-                m_ssJson << "\"" << szKeyName << "\":";
+                m_ssJson << "\"" << key.c_str()<< "\":";
             }
             else
             {
-                m_ssJson << ",\"" << szKeyName << "\":";
+                m_ssJson << ",\"" << key.c_str() << "\":";
             }
             return *this;
         }
@@ -223,16 +220,16 @@ class CJsonEncoderMl
         }
 
     public:
-        CJsonEncoderMl& operator & (const char* szKeyName)
+        CJsonEncoderMl& operator & (Key& key)
         {
             if (m_bIsFirstKey)
             {
                 m_bIsFirstKey = false;
-                m_ssJson << "\n" << Indent() << "\"" << szKeyName << "\": ";
+                m_ssJson << "\n" << Indent() << "\"" << key.c_str() << "\": ";
             }
             else
             {
-                m_ssJson << "," << "\n" << Indent() << "\"" << szKeyName << "\": ";
+                m_ssJson << "," << "\n" << Indent() << "\"" << key.c_str() << "\": ";
             }
             return *this;
         }
@@ -384,12 +381,16 @@ class CJsonDecoder
             Json::Reader reader;
             if (!reader.parse(sJson.c_str(), m_oJsonValueRoot))
             {
+                #ifdef _JSON_SERIALIZE_DEBUG_
                 LOG_ERR("parse json fail, json:[%s]", sJson.c_str());
+                #endif
                 return -1;
             }
             if (!m_oJsonValueRoot.isObject() && !m_oJsonValueRoot.isArray())
             {
+                #ifdef _JSON_SERIALIZE_DEBUG_
                 LOG_ERR("invalid object/array, json:[%s]", sJson.c_str());
+                #endif
                 return -1;
             }
             m_pCurrJsonValue = &m_oJsonValueRoot;

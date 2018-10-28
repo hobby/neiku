@@ -1,5 +1,6 @@
 #include "neiku/log.h"
 #include "neiku/serialize.h"
+#include "neiku/json.h"
 
 using namespace neiku;
 
@@ -17,7 +18,7 @@ public:
     {
         SERIALIZE(t, id);
         SERIALIZE(t, name);
-        return ar;
+        return t;
     }
 };
 
@@ -27,8 +28,8 @@ int main(int argc, char* argv[])
     person.id = 123;
     person.name = "YIF";
 
-    CObjDumper dumper;
-    dumper << person;
+    LOG_MSG("json_encode:[%s]", json_encode(person));
+    LOG_MSG("json_encode_ml:[%s]", json_encode_ml(person));
 
     return 0;
 }
