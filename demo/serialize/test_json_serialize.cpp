@@ -1,6 +1,5 @@
 #include "neiku/log.h"
-#include "neiku/serialize.h"
-#include "neiku/json.h"
+#include "neiku/json_serialize.h"
 
 using namespace neiku;
 

@@ -1,10 +1,8 @@
 include ../../makefile.neiku
 
-INCS = -I../../include/ \
-	   $(shell neiku_config --incs log jsoncpp)
+INCS = $(shell neiku_config --incs jsoncpp)
 
-LIBS = -lneiku \
-	   $(shell neiku_config --libs log jsoncpp)
+LIBS = $(shell neiku_config --libs jsoncpp)
 
 VPATH = 
 

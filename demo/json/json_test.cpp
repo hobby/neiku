@@ -6,7 +6,7 @@
 #include <cstdio>
 #include <string>
 
-#include <neiku/json.h>
+#include "jsoncpp/jsoncpp.h"
 
 using namespace std;
 
