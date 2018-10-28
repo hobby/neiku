@@ -232,6 +232,8 @@ class CLog
                         // 日志文件变大，尝试滚动
                         LogFileRotate();
                     }
+                    chmod(m_sLogFilePath.c_str(), 0660);
+
                 }
             }
         };
