@@ -21,6 +21,7 @@
  *                    支持直接获取http body自行解析
  *                    支持json_escape
  *         2017/10/03 支持setValue任意对象
+ *         2018/10/28 支持render任意对象(返回application/json)
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -53,6 +54,7 @@
 #include "ClearSilver.h"
 
 #include "neiku/serialize.h"
+#include "neiku/json_serialize.h"
 #include "neiku/singleton.h"
 #define CGX SINGLETON(neiku::CgX)
 
@@ -117,6 +119,17 @@ public:
 public:
     int render(const char* szTplPath);
 
+    template<typename OBJ>
+    int render(OBJ& obj)
+    {
+        CHECK_INIT(-1);
+
+        CJsonEncoder encoder;
+        encoder << obj;
+
+        return render(encoder.str());
+    }
+
 private:
     bool init();
     void destroy();
@@ -125,6 +138,7 @@ private:
     void setErrMsg(const char* szErrMsg);
 
     int render(const char* szTplPath, STRING& stOutput);
+    int render(const std::string& output);
 
 private:
     void setValue(const char * pHdfDoc);

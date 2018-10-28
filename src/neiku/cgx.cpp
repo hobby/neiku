@@ -482,6 +482,26 @@ int CgX::render(const char* szTplPath)
     return 0;
 }
 
+int CgX::render(const std::string& output)
+{
+    CHECK_INIT(-1);
+
+    STRING stOutput;
+    string_init(&stOutput);
+    string_appendn(&stOutput, output.c_str(), output.size());
+
+    NEOERR *pError = cgi_output(m_pCGI, &stOutput);
+    string_clear(&stOutput);
+    if(pError != STATUS_OK)
+    {
+
+        setErrMsg(pError);
+        return -2;
+    }
+
+    return 0;
+}
+
 int CgX::render(const char* szTplPath, STRING& stOutput)
 {
     CHECK_INIT(-1);

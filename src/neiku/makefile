@@ -1,6 +1,6 @@
 include $(shell neiku_config --conf makefile.neiku)
 
-INCS += $(shell neiku_config --incs charset cmdline clearsilver-cgi fcgi mysql)
+INCS += $(shell neiku_config --incs charset cmdline clearsilver-cgi fcgi mysql jsoncpp)
 
 LIBPATH = $(shell neiku_config --conf neiku.libpath)
 
