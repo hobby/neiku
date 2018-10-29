@@ -82,6 +82,44 @@ public:
     uint32_t getValue(const char* szName, uint32_t dwDefVal = 0);
     uint64_t getValue(const char* szName, uint64_t ddwDefVal = 0);
 
+    template<typename OBJ>
+    int parse(OBJ& obj)
+    {
+        CHECK_INIT(-1);
+
+        obj.serialize(*this);
+        return 0;
+    }
+
+    CgX& operator & (Key& key)
+    {
+        m_pKey = key.c_str();
+        return *this;
+    }
+
+    CgX& operator & (std::string& d)
+    {
+        std::string key;
+        key.append("Query.").append(m_pKey);
+
+        d = getValue(key.c_str(), "");
+        return *this;
+    }
+
+#define PARSE_NUM(T) \
+    CgX& operator & (T& d) \
+    { \
+        std::string key; \
+        key.append("Query.").append(m_pKey); \
+      \
+        d = getValue(key.c_str(), 0); \
+        return *this; \
+    }
+    PARSE_NUM(int32_t);
+    PARSE_NUM(int64_t);
+    PARSE_NUM(uint32_t);
+    PARSE_NUM(uint64_t);
+
     void setValue(const char* szName, int iValue);
     void setValue(const char* szName, const char* szValue);
     void setValue(const char* szName, const std::string& sValue);
@@ -152,6 +190,8 @@ private:
 
     bool m_bParseHttpBodyManually;
     std::string m_sHttpBody;
+
+    const char* m_pKey;
 };
 
 };
