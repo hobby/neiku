@@ -26,7 +26,7 @@
  *              基于jsoncpp、重载、宏技术，简单实现json字符串自动转成C++对象
  *　　　　　　　支持对象(嵌套)、bool/int32/64,uint32/64,std::string
  *          v8  -- json decoder
- *              支持std::vector<std::string>，对json的字符串数组
+ *              支持std::vector<T>，对应json的任意类型数组
  * usage:
  *       #include "neiku/json.h"
  *
@@ -416,7 +416,11 @@ class CJsonDecoder
 #define GEN_OPERATOR(type, method) \
         CJsonDecoder& operator & (type& o) \
         { \
-            if (m_pCurrJsonValue->isMember(m_szKeyName)) \
+            if (m_szKeyName == NULL) \
+            { \
+                o = m_pCurrJsonValue->method(); \
+            } \
+            else if (m_pCurrJsonValue->isMember(m_szKeyName)) \
             { \
                 const Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName]; \
                 o = value.method(); \
@@ -430,26 +434,33 @@ class CJsonDecoder
         GEN_OPERATOR(uint64_t,    asUInt64);
         GEN_OPERATOR(std::string, asString);
 
-        //template <class T>
-        CJsonDecoder& operator & (std::vector<std::string>& v)
+        template <class T>
+        CJsonDecoder& operator & (std::vector<T>& v)
         {
             if (!m_pCurrJsonValue->isMember(m_szKeyName))
             {
                 return *this;
             }
 
-            const Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName];
+            Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName];
             if (!value.isArray())
             {
                 return *this;
             }
 
+            Json::Value *pJsonValue = m_pCurrJsonValue;
+            const char *szKeyName = m_szKeyName;
             for (Json::ArrayIndex i = 0; i < value.size(); ++i)
             {
-                // TODO: 支持任意对象
-                std::string s = value[i].asString();
-                v.push_back(s);
+                m_szKeyName = NULL;
+                m_pCurrJsonValue = &value[i];
+
+                T t;
+                *this & t;
+                v.push_back(t);
             }
+            m_szKeyName = szKeyName;
+            m_pCurrJsonValue = pJsonValue;
 
             return *this;
         }
@@ -460,8 +471,7 @@ class CJsonDecoder
             Json::Value* pJsonValue = m_pCurrJsonValue;
             if (m_szKeyName != NULL)
             {
-                const Json::Value& obj = (*pJsonValue)[m_szKeyName];
-                m_pCurrJsonValue = const_cast<Json::Value*>(&obj);
+                m_pCurrJsonValue = &(*pJsonValue)[m_szKeyName];
                 o.serialize(*this);
             }
             else
