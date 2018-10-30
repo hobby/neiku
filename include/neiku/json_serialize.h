@@ -25,6 +25,8 @@
  *          v8  -- json decoder
  *              基于jsoncpp、重载、宏技术，简单实现json字符串自动转成C++对象
  *　　　　　　　支持对象(嵌套)、bool/int32/64,uint32/64,std::string
+ *          v8  -- json decoder
+ *              支持std::vector<std::string>，对json的字符串数组
  * usage:
  *       #include "neiku/json.h"
  *
@@ -405,9 +407,9 @@ class CJsonDecoder
         }
 
     public:
-        CJsonDecoder& operator & (const char* szKeyName)
+        CJsonDecoder& operator & (Key& key)
         {
-            m_szKeyName = szKeyName;
+            m_szKeyName = key.c_str();
             return *this;
         }
 
@@ -427,6 +429,30 @@ class CJsonDecoder
         GEN_OPERATOR(uint32_t,    asUInt);
         GEN_OPERATOR(uint64_t,    asUInt64);
         GEN_OPERATOR(std::string, asString);
+
+        //template <class T>
+        CJsonDecoder& operator & (std::vector<std::string>& v)
+        {
+            if (!m_pCurrJsonValue->isMember(m_szKeyName))
+            {
+                return *this;
+            }
+
+            const Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName];
+            if (!value.isArray())
+            {
+                return *this;
+            }
+
+            for (Json::ArrayIndex i = 0; i < value.size(); ++i)
+            {
+                // TODO: 支持任意对象
+                std::string s = value[i].asString();
+                v.push_back(s);
+            }
+
+            return *this;
+        }
 
         template <class T>
         CJsonDecoder& operator & (T& o)
