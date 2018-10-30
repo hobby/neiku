@@ -217,7 +217,12 @@ static void explode(std::vector<std::string>& list, const std::string& str
     }
 }
 
-CgX::CgX(): m_pCGI(NULL), m_bInit(false), m_bAccepted(false), m_bParseHttpBodyManually(false)
+CgX::CgX(): m_pCGI(NULL)
+          , m_bInit(false)
+          , m_bAccepted(false)
+          , m_bParseHttpBodyManually(false)
+          , m_pKey("")
+          , m_bIsJsonPost(false)
 {
     // enable cgi & fastcgi with libfcgi(fcgi_stdio.h)
     cgiwrap_init_std(0, NULL, environ);
@@ -423,6 +428,13 @@ bool CgX::init()
         // here you can parse http body yourself
         // with CGX->setParseHttpBodyManually(true) frist
         // and CGX->getHttpBody() second
+        pError = GetHttpBody(m_pCGI, &m_sHttpBody);
+    }
+    else if (isJsonPost(hdf_get_value(m_pCGI->hdf, "CGI.ContentType", NULL)))
+    {
+        // do real json-parse on parse()
+        // here just save the body
+        m_bIsJsonPost = true;
         pError = GetHttpBody(m_pCGI, &m_sHttpBody);
     }
     else
@@ -656,3 +668,13 @@ const std::string CgX::getHttpBody()
     CHECK_INIT("");
     return m_sHttpBody;
 }
+
+bool CgX::isJsonPost(const char* szContentType)
+{
+    if (szContentType && !strncmp(szContentType, "application/json", 16))
+    {
+        return true;
+    }
+    return false;
+}
+

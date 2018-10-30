@@ -22,6 +22,7 @@
  *                    支持json_escape
  *         2017/10/03 支持setValue任意对象
  *         2018/10/28 支持render任意对象(返回application/json)
+ *         2018/10/30 支持parse JSON POST到任意对象
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -87,6 +88,22 @@ public:
     {
         CHECK_INIT(-1);
 
+        // JSON
+        if (m_bIsJsonPost)
+        {
+            CJsonDecoder decoder;
+            int ret = decoder.Parse(m_sHttpBody);
+            if (ret != 0)
+            {
+                return ret;
+            }
+            decoder >> obj;
+            return 0;
+        }
+
+        // TODO: XML
+
+        // GET、FORM-POST
         obj.serialize(*this);
         return 0;
     }
@@ -103,6 +120,14 @@ public:
         key.append("Query.").append(m_pKey);
 
         d = getValue(key.c_str(), "");
+        return *this;
+    }
+
+    // 不支持GET/FORM-POST自动转std::vector
+    // 此时请求JSON或者XML POST
+    template <typename T>
+    CgX& operator & (std::vector<T>& v)
+    {
         return *this;
     }
 
@@ -165,6 +190,7 @@ public:
         CJsonEncoder encoder;
         encoder << obj;
 
+        setContentType("application/json");
         return render(encoder.str());
     }
 
@@ -180,6 +206,7 @@ private:
 
 private:
     void setValue(const char * pHdfDoc);
+    bool isJsonPost(const char* szContentType);
 
 private:
     CGI *m_pCGI;
@@ -192,6 +219,7 @@ private:
     std::string m_sHttpBody;
 
     const char* m_pKey;
+    bool m_bIsJsonPost;
 };
 
 };
