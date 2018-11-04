@@ -23,6 +23,7 @@
  *         2017/10/03 支持setValue任意对象
  *         2018/10/28 支持render任意对象(返回application/json)
  *         2018/10/30 支持parse JSON POST到任意对象
+ *         2018/11/04 支持getHeader()获取任意HTTP 头(不用硬编码于代码中)
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -83,13 +84,15 @@ public:
     uint32_t getValue(const char* szName, uint32_t dwDefVal = 0);
     uint64_t getValue(const char* szName, uint64_t ddwDefVal = 0);
 
+    const std::string getHeader(const char* szName, const char* szDefVal = "");
+
     template<typename OBJ>
     int parse(OBJ& obj)
     {
         CHECK_INIT(-1);
 
         // JSON
-        if (m_bIsJsonPost)
+        if (m_bIsJsonPost && !m_sHttpBody.empty())
         {
             CJsonDecoder decoder;
             int ret = decoder.Parse(m_sHttpBody);
@@ -158,6 +161,7 @@ public:
         dumper << obj;
         hdf_read_string_ignore(m_pCGI->hdf, dumper.str().c_str(), 1);
     }
+
 
 public:
     void setParseHttpBodyManually(bool bFlag = true);

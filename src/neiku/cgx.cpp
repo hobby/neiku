@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string>
 #include <vector>
+#include <functional>
+#include <algorithm>
 
 #include "neiku/cgx.h"
 
@@ -455,6 +457,7 @@ bool CgX::init()
 void CgX::destroy()
 {
     m_bInit = false;
+    m_sLastErrMsg = "";
 
     if(m_pCGI != NULL)
     {
@@ -463,6 +466,10 @@ void CgX::destroy()
     }
 
     m_bAccepted = false;
+    m_bParseHttpBodyManually = false;
+    m_sHttpBody = "";
+    m_pKey = "";
+    m_bIsJsonPost = false;
 }
 
 int CgX::render(const char* szTplPath)
@@ -678,3 +685,45 @@ bool CgX::isJsonPost(const char* szContentType)
     return false;
 }
 
+const std::string CgX::getHeader(const char* szName, const char* szDefVal)
+{
+    CHECK_INIT(szDefVal);
+
+    char hdf_name[64] = {0};
+    snprintf(hdf_name, sizeof(hdf_name), "HTTP.%s", szName);
+    const char* val = hdf_get_value(m_pCGI->hdf, hdf_name, NULL);
+    if (val != NULL)
+    {
+        return val;
+    }
+
+    std::string tmp_name(hdf_name);
+    size_t pos = tmp_name.find('.');
+    while (pos != std::string::npos)
+    {
+        tmp_name.replace(pos, 1, "_");
+        pos = tmp_name.find('.');
+    }
+    pos = tmp_name.find('-');
+    while (pos != std::string::npos)
+    {
+        tmp_name.replace(pos, 1, "_");
+        pos = tmp_name.find('-');
+    }
+    LOG_MSG("tmp_name:[%s]", tmp_name.c_str());
+
+    std::string env_name;
+    env_name.resize(tmp_name.size());
+    std::transform(tmp_name.begin(), tmp_name.end(), env_name.begin(), (int (*)(int))std::toupper);
+
+    char* s = NULL;
+    cgiwrap_getenv(env_name.c_str(), &s);
+    if (s != NULL)
+    {
+        std::string value(s);
+        free(s); // 实际走getenv，然后strdup
+        s = NULL;
+        return value;
+    }
+    return szDefVal;
+}
