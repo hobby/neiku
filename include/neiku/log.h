@@ -49,6 +49,7 @@
  *             注意：文件大小默认限制20MB，个数限制20个
  *        v17: 支持区分suseconds_t的实际打印格式串，osx平台是int，linux是long int
  *             osx平台使用stat而不是stat64
+ *        v18: 支持在线日志（快速获取某一请求的所有处理日志）
  * usage:
  *       #include <neiku/log.h>
  *
@@ -71,6 +72,7 @@
 #include <cstdarg>
 #include <cstdio>
 #include <string>
+#include <vector>
 
 // 默认情况下，提供neiku版日志单例
 #ifndef __NO_NEIKU_SINGLETON_LOG__
@@ -125,6 +127,7 @@ class CLog
               , m_bLog2File(false)
               , m_llLogFileMaxSize(20*1024*1024)
               , m_dwLogFileMaxNum(20)
+              , m_bLog2Online(false)
         {};
 
         // 设置日志文件路径
@@ -168,6 +171,23 @@ class CLog
         {
             m_bLog2File = bLog2File;
         };
+
+        // 在线日志开关
+        void SetLog2Online(bool bLog2Online)
+        {
+            m_bLog2Online = bLog2Online;
+        };
+
+        void ClearOnlineLog()
+        {
+            std::vector<std::string> empty;
+            m_vOnlineLog.swap(empty);
+        }
+
+        const std::vector<std::string>& GetOnlineLog()
+        {
+            return m_vOnlineLog;
+        }
 
         // 设置日志优先级
         void SetLogLevel(int iLogLevel)
@@ -235,6 +255,19 @@ class CLog
                     chmod(m_sLogFilePath.c_str(), 0660);
 
                 }
+            }
+
+            // 输出到在线日志
+            if (m_bLog2Online == true)
+            {
+                char line[2048] = {0};
+
+                va_list vArgs;
+                va_start(vArgs, szFormat);
+                vsnprintf(line, sizeof(line), szFormat, vArgs);
+                va_end(vArgs);
+
+                m_vOnlineLog.push_back(line);
             }
         };
 
@@ -360,6 +393,9 @@ class CLog
         std::string m_sNoLogFilePath; // filename + .nolog
         int64_t  m_llLogFileMaxSize;  // in bytes
         uint32_t m_dwLogFileMaxNum;
+
+        bool m_bLog2Online;
+        std::vector<std::string> m_vOnlineLog;
 };
 
 };
