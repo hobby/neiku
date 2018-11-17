@@ -126,6 +126,12 @@ public:
         return *this;
     }
 
+    template <typename T>
+    CgX& operator & (T& o)
+    {
+        return o.serialize(*this);
+    }
+
     // 不支持GET/FORM-POST自动转std::vector
     // 此时请求JSON或者XML POST
     template <typename T>

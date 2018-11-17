@@ -710,7 +710,6 @@ const std::string CgX::getHeader(const char* szName, const char* szDefVal)
         tmp_name.replace(pos, 1, "_");
         pos = tmp_name.find('-');
     }
-    LOG_MSG("tmp_name:[%s]", tmp_name.c_str());
 
     std::string env_name;
     env_name.resize(tmp_name.size());
