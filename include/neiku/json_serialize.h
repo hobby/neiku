@@ -437,23 +437,31 @@ class CJsonDecoder
         template <class T>
         CJsonDecoder& operator & (std::vector<T>& v)
         {
-            if (!m_pCurrJsonValue->isMember(m_szKeyName))
+            Json::Value *pValue = NULL;
+            if (m_szKeyName == NULL)
             {
-                return *this;
+                pValue = m_pCurrJsonValue;
+            }
+            else
+            {
+                if (!m_pCurrJsonValue->isMember(m_szKeyName))
+                {
+                    return *this;
+                }
+                pValue = &(*m_pCurrJsonValue)[m_szKeyName];
             }
 
-            Json::Value& value = (*m_pCurrJsonValue)[m_szKeyName];
-            if (!value.isArray())
+            if (!pValue->isArray())
             {
                 return *this;
             }
 
             Json::Value *pJsonValue = m_pCurrJsonValue;
             const char *szKeyName = m_szKeyName;
-            for (Json::ArrayIndex i = 0; i < value.size(); ++i)
+            for (Json::ArrayIndex i = 0; i < pValue->size(); ++i)
             {
                 m_szKeyName = NULL;
-                m_pCurrJsonValue = &value[i];
+                m_pCurrJsonValue = &(*pValue)[i];
 
                 T t;
                 *this & t;
