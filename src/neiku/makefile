@@ -7,8 +7,8 @@ LIBPATH = $(shell neiku_config --conf neiku.libpath)
 OUTPUT = libneiku.a libcgi.a libdbx.a
 
 ALL: $(OUTPUT)
-
-libneiku.a: charset.o cmdline.o cs.o utility.o
+ 
+libneiku.a: charset.o cmdline.o cs.o utility.o md5.o
 	ar -r $@ $^
 	mkdir -pv $(LIBPATH) && cp -vf $@ $(LIBPATH)
 
