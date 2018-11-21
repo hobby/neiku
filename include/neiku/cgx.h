@@ -24,6 +24,7 @@
  *         2018/10/28 支持render任意对象(返回application/json)
  *         2018/10/30 支持parse JSON POST到任意对象
  *         2018/11/04 支持getHeader()获取任意HTTP 头(不用硬编码于代码中)
+ *         2018/11/22 支持parse XML POST到任意对象(content-type要求textxml或者application/xml)
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -57,6 +58,7 @@
 
 #include "neiku/serialize.h"
 #include "neiku/json_serialize.h"
+#include "neiku/xml_serialize.h"
 #include "neiku/singleton.h"
 #define CGX SINGLETON(neiku::CgX)
 
@@ -104,9 +106,19 @@ public:
             return 0;
         }
 
-        // TODO: XML
+        // XML
+        if (m_bIsXmlPost && !m_sHttpBody.empty())
+        {
+            XmlParser parser(m_sHttpBody.data(), m_sHttpBody.size());
+            if (!parser)
+            {
+                return -1;
+            }
+            parser >> obj;
+            return 0;
+        }
 
-        // GET、FORM-POST
+        //
         obj.serialize(*this);
         return 0;
     }
@@ -217,6 +229,7 @@ private:
 private:
     void setValue(const char * pHdfDoc);
     bool isJsonPost(const char* szContentType);
+    bool isXmlPost(const char* szContentType);
 
 private:
     CGI *m_pCGI;
@@ -230,6 +243,8 @@ private:
 
     const char* m_pKey;
     bool m_bIsJsonPost;
+
+    bool m_bIsXmlPost;
 };
 
 };

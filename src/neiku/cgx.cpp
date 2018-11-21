@@ -225,6 +225,7 @@ CgX::CgX(): m_pCGI(NULL)
           , m_bParseHttpBodyManually(false)
           , m_pKey("")
           , m_bIsJsonPost(false)
+          , m_bIsXmlPost(false)
 {
     // enable cgi & fastcgi with libfcgi(fcgi_stdio.h)
     cgiwrap_init_std(0, NULL, environ);
@@ -439,6 +440,13 @@ bool CgX::init()
         m_bIsJsonPost = true;
         pError = GetHttpBody(m_pCGI, &m_sHttpBody);
     }
+    else if (isXmlPost(hdf_get_value(m_pCGI->hdf, "CGI.ContentType", NULL)))
+    {
+        // do real xml-parse on parse()
+        // here just save the body
+        m_bIsXmlPost = true;
+        pError = GetHttpBody(m_pCGI, &m_sHttpBody);
+    }
     else
     {
         // only application/x-www-form-urlencoded & multipart/form-data
@@ -470,6 +478,7 @@ void CgX::destroy()
     m_sHttpBody = "";
     m_pKey = "";
     m_bIsJsonPost = false;
+    m_bIsXmlPost = false;
 }
 
 int CgX::render(const char* szTplPath)
@@ -679,6 +688,19 @@ const std::string CgX::getHttpBody()
 bool CgX::isJsonPost(const char* szContentType)
 {
     if (szContentType && !strncmp(szContentType, "application/json", 16))
+    {
+        return true;
+    }
+    return false;
+}
+
+bool CgX::isXmlPost(const char* szContentType)
+{
+    if (szContentType && !strncmp(szContentType, "application/xml", 15))
+    {
+        return true;
+    }
+    if (szContentType && !strncmp(szContentType, "text/xml", 8))
     {
         return true;
     }
