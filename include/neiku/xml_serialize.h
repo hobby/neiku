@@ -188,6 +188,14 @@ private:
     tinyxml2::XMLHandle   _handle;
 };
 
+template<typename F>
+static std::string to_str(const F& from)
+{
+    std::stringstream ss;
+    ss << from;
+    return ss.str();
+};
+
 class XmlDumper
 {
 public:
@@ -227,6 +235,25 @@ public:
         _key = key.c_str();
         return *this;
     }
+
+#define DUMP_NUM(TYPE) \
+    XmlDumper& operator & (TYPE val) \
+    { \
+        std::string key = _key; \
+        if (key.empty()) \
+        { \
+            key = "unknow"; \
+        } \
+        _xml.append("<").append(key).append(">"); \
+        _xml.append(to_str(val)); \
+        _xml.append("</").append(key).append(">"); \
+        return *this; \
+    }
+
+    DUMP_NUM(int32_t)
+    DUMP_NUM(int64_t)
+    DUMP_NUM(uint32_t)
+    DUMP_NUM(uint64_t)
 
     XmlDumper& operator & (std::string& str)
     {
