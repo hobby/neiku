@@ -207,6 +207,12 @@ public:
         return _xml.c_str();
     }
 
+    const std::string& str()
+    {
+        return _xml;
+    }
+
+
     void reset(const char* root = "")
     {
         _key = "";
