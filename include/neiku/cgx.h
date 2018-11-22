@@ -25,6 +25,7 @@
  *         2018/10/30 支持parse JSON POST到任意对象
  *         2018/11/04 支持getHeader()获取任意HTTP 头(不用硬编码于代码中)
  *         2018/11/22 支持parse XML POST到任意对象(content-type要求textxml或者application/xml)
+ *         2018/11/23 支持render任意对象到XML(返回application/xml)
  *
  * link: -I~/opt/clearsilver/include/ClearSilver/
  *       -L~/opt/clearsilver/lib/ -lneo_cgi -lneo_cs -lneo_utl -lz
@@ -214,6 +215,18 @@ public:
 
         setContentType("application/json");
         return render(encoder.str());
+    }
+
+    template<typename OBJ>
+    int renderXML(OBJ& obj, const std::string& root = "")
+    {
+        CHECK_INIT(-1);
+
+        XmlDumper dumper(root.c_str());
+        dumper << obj;
+
+        setContentType("application/xml");
+        return render(dumper.str());
     }
 
 private:
