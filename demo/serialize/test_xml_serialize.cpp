@@ -8,15 +8,17 @@ class CPerson
 public:
     int32_t id;
     std::string name;
+    bool flag;
 
-    CPerson(): id(0)
+    CPerson(): id(0), flag(0)
     {}
 
     template <typename T>
     T& serialize(T& t)
     {
-        //SERIALIZE(t, id);
+        SERIALIZE(t, id);
         SERIALIZE(t, name);
+        SERIALIZE(t, flag);
         return t;
     }
 };

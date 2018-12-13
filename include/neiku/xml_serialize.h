@@ -103,6 +103,21 @@ public:
 
     PARSE_FLOAT(float, strtof)
     PARSE_FLOAT(double, strtod)
+    
+    XmlParser& operator & (bool& str)
+    {
+        //tinyxml2::XMLElement* elm = NULL;
+        //if (_key.empty())
+        //{
+        //    elm = _handle.ToElement();
+        //}
+        //else
+        //{
+        //    elm = _handle.LastChildElement(_key.c_str()).ToElement();
+        //}
+        //str = elm && elm->GetText() ? elm->GetText() : "";
+        return *this;
+    }
 
     XmlParser& operator & (std::string& str)
     {
@@ -260,6 +275,22 @@ public:
     DUMP_NUM(int64_t)
     DUMP_NUM(uint32_t)
     DUMP_NUM(uint64_t)
+
+    XmlDumper& operator & (bool& str)
+    {
+        //std::string key = _key;
+        //if (key.empty())
+        //{
+        //    key = "unknow";
+        //}
+        //_xml.append("<").append(key).append(">");;
+        //if (!str.empty())
+        //{
+        //    _xml.append("<![CDATA[").append(str).append("]]>");
+        //}
+        //_xml.append("</").append(key).append(">");
+        return *this;
+    }
 
     XmlDumper& operator & (std::string& str)
     {
