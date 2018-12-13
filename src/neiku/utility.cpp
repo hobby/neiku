@@ -39,6 +39,11 @@ uint64_t neiku::timems()
 
 std::string neiku::timestr(time_t sec, const char* fmt)
 {
+    if (sec <= 0 || fmt == NULL)
+    {
+        return std::string("");
+    }
+
     struct tm tms;
     localtime_r(&sec, &tms);
 
