@@ -25,11 +25,11 @@ class CMsq
         };
 
     public:
-        #define JDZT_MSQ_MSGMAXSIZE 1024*1024UL
+        #define MSQ_MSGMAXSIZE 1024*1024UL
         struct SMsgBuf
         {
             long mtype;
-            char mtext[JDZT_MSQ_MSGMAXSIZE];
+            char mtext[MSQ_MSGMAXSIZE];
         };
 
     public:
@@ -50,10 +50,10 @@ class CMsq
             m_iMsqId = msgget(m_tKey, m_iMsgFlag);
             if (m_iMsqId == -1)
             {
-                char *str = strerror_r(errno, m_szStrError, sizeof(m_szStrError));
+                strerror_r(errno, m_szStrError, sizeof(m_szStrError));
                 snprintf(m_szLastErrMsg, sizeof(m_szLastErrMsg)
                          , "msgget fail, key:[%#010x], ret:[%d], msg:[%s]"
-                         , m_tKey, m_iMsqId, str);
+                         , m_tKey, m_iMsqId, m_szStrError);
                 return -1;
             }
 
@@ -92,10 +92,10 @@ class CMsq
                     }
                     else
                     {
-                        char *str = strerror_r(errno, m_szStrError, sizeof(m_szStrError));
+                        strerror_r(errno, m_szStrError, sizeof(m_szStrError));
                         snprintf(m_szLastErrMsg, sizeof(m_szLastErrMsg)
                                  , "msgrcv fail, ret:[%d], msg:[%s]"
-                                 , iRet, str);
+                                 , iRet, m_szStrError);
                         break;
                     }
                 }
@@ -118,14 +118,14 @@ class CMsq
                 return -1;
             }
 
-            if(JDZT_MSQ_MSGMAXSIZE < sMsg.size())
+            if(MSQ_MSGMAXSIZE < sMsg.size())
             {
                 snprintf(m_szLastErrMsg, sizeof(m_szLastErrMsg)
                          , "msg too big, size:[%lu], maxsize:[%lu]"
-                         , sMsg.size(), JDZT_MSQ_MSGMAXSIZE);
+                         , sMsg.size(), MSQ_MSGMAXSIZE);
                 return MSQ_ERRCODE_MSGTOOBIG;
             }
-            
+
             m_sMsgBuf.mtype = getpid();
             memcpy(m_sMsgBuf.mtext, sMsg.c_str(), sMsg.size());
 
@@ -150,10 +150,10 @@ class CMsq
                     }
                     else
                     {
-                        char *str = strerror_r(errno, m_szStrError, sizeof(m_szStrError));
+                        strerror_r(errno, m_szStrError, sizeof(m_szStrError));
                         snprintf(m_szLastErrMsg, sizeof(m_szLastErrMsg)
                                  , "msgsnd fail, ret:[%d], msg:[%s]"
-                                 , iRet, str);
+                                 , iRet, m_szStrError);
                         break;
                     }
                 }
