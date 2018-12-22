@@ -1,13 +1,25 @@
-#include "yaml-cpp/yaml.h"
-#include <iostream>
-#include <fstream>
+
+/*
+ * file:   neiku/yaml_serialize.h
+ * desc:   yaml serialize tool for C++
+ * author: YIF
+ * date:   2015/05/30 22:49:00
+ *
+ * vim:ts=4;sw=4;expandtab
+ */
+
+#ifndef __NK_YAML_SERIALIZE_H__
+#define __NK_YAML_SERIALIZE_H__ 1
+
+#include <inttypes.h>
+#include <sstream>
 #include <string>
 #include <vector>
+#include <map>
 
 #include "neiku/serialize.h"
-#include "neiku/json_serialize.h"
-#include "neiku/yaml_serialize.h"
-#if 0
+#include "yaml-cpp/yaml.h"
+
 namespace neiku
 {
 
@@ -179,111 +191,5 @@ private:
 };
 
 };
+
 #endif
-
-// our data types
-struct Vec3 {
-   int x, y, z;
-
-   template<typename AR>
-   AR& serialize(AR& ar)
-   {
-       SERIALIZE(ar, x);
-       SERIALIZE(ar, y);
-       SERIALIZE(ar, z);
-
-       return ar;
-   }
-};
-
-struct Power {
-   std::string name;
-   int damage;
-
-   template<typename AR>
-   AR& serialize(AR& ar)
-   {
-       SERIALIZE(ar, name);
-       SERIALIZE(ar, damage);
-
-       return ar;
-   }
-};
-
-struct Monster {
-   std::string name;
-//    Vec3 position;
-   std::vector<int> position;
-   std::vector <Power> powers;
-   uint32_t qq;
-
-   template<typename AR>
-   AR& serialize(AR& ar)
-   {
-       SERIALIZE(ar, name);
-       SERIALIZE(ar, qq);
-       SERIALIZE(ar, position);
-       SERIALIZE(ar, powers);
-
-       return ar;
-   }
-};
-
-// now the extraction operators for these types
-void operator >> (const YAML::Node& node, Vec3& v) {
-   node[0] >> v.x;
-   node[1] >> v.y;
-   node[2] >> v.z;
-}
-
-void operator >> (const YAML::Node& node, Power& power) {
-   node["name"] >> power.name;
-   node["damage"] >> power.damage;
-}
-
-void operator >> (const YAML::Node& node, Monster& monster) {
-   node["name"] >> monster.name;
-   node["position"] >> monster.position;
-   const YAML::Node& powers = node["powers"];
-   for(unsigned i=0;i<powers.size();i++) {
-      Power power;
-      powers[i] >> power;
-      monster.powers.push_back(power);
-   }
-}
-
-int main(int argc, char* argv[])
-{
-    // std::ifstream fin("monsters.yaml");
-    // YAML::Parser parser(fin);
-    // YAML::Node doc;
-    // parser.GetNextDocument(doc);
-    // for (unsigned i = 0; i < doc.size(); i++)
-    // {
-    //     Monster monster;
-    //     doc[i] >> monster;
-    //     std::cout << monster.name << "\n";
-    // }
-
-    neiku::YamlParser parser("monsters.yaml");
-    if (!parser)
-    {
-        std::cout << "parser fail" << std::endl;
-        return -1;
-    }
-
-    // Monster monster;
-    // parser >> monster;
-    // std::cout << monster.name << std::endl;
-    // std::cout << monster.qq << std::endl;
-
-    std::vector<Monster> monsters;
-    parser >> monsters;
-    std::cout << monsters.size() << std::endl;
-    for (size_t i = 0; i < monsters.size(); ++i)
-    {
-        std::cout << monsters[i].name << std::endl;
-    }
-    std::cout << json_encode_ml(monsters) << std::endl;
-    return 0;
-}
