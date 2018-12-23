@@ -13,6 +13,7 @@
 
 #include <inttypes.h>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <vector>
 #include <map>
