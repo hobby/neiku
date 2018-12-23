@@ -71,7 +71,7 @@ public:
         return *this;
     }
 
-#define PARSE_INTEGER(TYPE) \
+#define PARSE_INTEGER_YAML(TYPE) \
     YamlParser& operator & (TYPE& num) \
     { \
         YAML::Node* current = NULL; \
@@ -91,12 +91,12 @@ public:
         return *this; \
     }
 
-    PARSE_INTEGER(uint32_t);
-    PARSE_INTEGER(uint64_t);
-    PARSE_INTEGER(int32_t);
-    PARSE_INTEGER(int64_t);
-    PARSE_INTEGER(float);
-    PARSE_INTEGER(double);
+    PARSE_INTEGER_YAML(uint32_t);
+    PARSE_INTEGER_YAML(uint64_t);
+    PARSE_INTEGER_YAML(int32_t);
+    PARSE_INTEGER_YAML(int64_t);
+    PARSE_INTEGER_YAML(float);
+    PARSE_INTEGER_YAML(double);
 
     YamlParser& operator & (std::string& str)
     {
