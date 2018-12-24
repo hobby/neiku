@@ -3,6 +3,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <set>
 
 #include "neiku/serialize.h"
 #include "neiku/json_serialize.h"
@@ -216,7 +217,11 @@ struct Monster {
    std::vector<int> position;
    std::vector <Power> powers;
    uint32_t qq;
+   std::set<std::string> xxx;
+   bool flag;
 
+    Monster(): qq(0), flag(true)
+    {}
    template<typename AR>
    AR& serialize(AR& ar)
    {
@@ -224,6 +229,10 @@ struct Monster {
        SERIALIZE(ar, qq);
        SERIALIZE(ar, position);
        SERIALIZE(ar, powers);
+       SERIALIZE(ar, xxx);
+
+    //    flag = false;
+       SERIALIZE(ar, flag);
 
        return ar;
    }
@@ -242,14 +251,14 @@ void operator >> (const YAML::Node& node, Power& power) {
 }
 
 void operator >> (const YAML::Node& node, Monster& monster) {
-   node["name"] >> monster.name;
-   node["position"] >> monster.position;
-   const YAML::Node& powers = node["powers"];
-   for(unsigned i=0;i<powers.size();i++) {
-      Power power;
-      powers[i] >> power;
-      monster.powers.push_back(power);
-   }
+//    node["name"] >> monster.name;
+//    node["position"] >> monster.position;
+//    const YAML::Node& powers = node["powers"];
+//    for(unsigned i=0;i<powers.size();i++) {
+//       Power power;
+//       powers[i] >> power;
+//     //   monster.powers.push_back(power);
+//    }
 }
 
 int main(int argc, char* argv[])

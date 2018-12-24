@@ -1,6 +1,6 @@
 include $(shell neiku_config --conf makefile.neiku)
 
-INCS = $(shell neiku_config --incs cgi log jsoncpp yaml-cpp)
+INCS = -I ../../include $(shell neiku_config --incs cgi log jsoncpp yaml-cpp)
 
 LIBS = $(shell neiku_config --libs cgi log jsoncpp yaml-cpp)
 

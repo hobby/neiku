@@ -12,6 +12,10 @@
       damage: 25
     - name: Claws
       damage: 15
+  xxx:
+    - 1
+    - 2
+  flag: false
 - name: Wizard
   position: [5, -3, 0]
   powers:
@@ -19,3 +23,7 @@
       damage: 50
     - name: Staff
       damage: 3
+  xxx:
+    - 1
+    - 2
+  flag: true

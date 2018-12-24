@@ -65,12 +65,6 @@ public:
         return *this;
     }
 
-    YamlParser& operator & (bool& str)
-    {
-        // TODO:
-        return *this;
-    }
-
 #define PARSE_INTEGER_YAML(TYPE) \
     YamlParser& operator & (TYPE& num) \
     { \
@@ -97,6 +91,7 @@ public:
     PARSE_INTEGER_YAML(int64_t);
     PARSE_INTEGER_YAML(float);
     PARSE_INTEGER_YAML(double);
+    PARSE_INTEGER_YAML(bool);
 
     YamlParser& operator & (std::string& str)
     {
@@ -138,6 +133,10 @@ public:
         {
             child = const_cast<YAML::Node*>(current->FindValue(_key.c_str()));
         }
+        if (child == NULL)
+        {
+            return *this;
+        }
 
         if (child->Type() == YAML::NodeType::Sequence)
         {
@@ -158,6 +157,43 @@ public:
     }
 
     template<typename OBJ>
+    YamlParser& operator & (std::set<OBJ>& objs)
+    {
+        std::string key = _key;
+        YAML::Node* current = _current;
+        YAML::Node* child = NULL;
+        if (key.empty())
+        {
+            child = current;
+        }
+        else
+        {
+            child = const_cast<YAML::Node*>(current->FindValue(_key.c_str()));
+        }
+        if (child == NULL)
+        {
+            return *this;
+        }
+
+        if (child->Type() == YAML::NodeType::Sequence)
+        {
+            for (YAML::Iterator it = child->begin(); it != child->end(); ++it)
+            {
+                _key = "";
+                _current = const_cast<YAML::Node*>(&(*it));
+
+                OBJ obj;
+                *this & obj;
+                objs.insert(obj);
+            }
+        }
+
+        _key = key;
+        _current = current;
+        return *this;
+    }
+
+    template<typename OBJ>
     YamlParser& operator & (OBJ& obj)
     {
         YAML::Node* current = _current;
@@ -167,6 +203,10 @@ public:
         else
         {
             _current = const_cast<YAML::Node*>(current->FindValue(_key.c_str()));
+        }
+        if (_current == NULL)
+        {
+            return *this;
         }
 
         std::string key = _key;

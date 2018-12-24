@@ -151,6 +151,25 @@ class CJsonEncoder
             return *this;
         }
 
+        // set 视为 json 数组
+        template <class T>
+        CJsonEncoder& operator & (std::set<T>& vector)
+        {
+            m_ssJson << "[";
+            if (!vector.empty())
+            {
+                typename std::set<T>::iterator it = vector.begin();
+                *this & *it;
+                for (++it; it != vector.end(); ++it)
+                {
+                    m_ssJson << ",";
+                    *this & *it;
+                }
+            }
+            m_ssJson << "]";
+            return *this;
+        }
+
         // map 视为 json 对象
         template <class KEY, class VALUE>
         CJsonEncoder& operator & (std::map<KEY, VALUE>& map)
@@ -296,6 +315,31 @@ class CJsonEncoderMl
                 {
                     m_ssJson << "," << "\n" << Indent();
                     *this & vector[index];
+                }
+                m_iIndentNum -= 1;
+                m_ssJson << "\n" << Indent();
+                m_iIndentNum = i;
+            }
+            m_ssJson << "]";
+            return *this;
+        }
+
+        // set 视为 json 数组
+        template <class T>
+        CJsonEncoderMl& operator & (std::set<T>& vector)
+        {
+            m_ssJson << "[";
+            if (!vector.empty())
+            {
+                int i  = m_iIndentNum;
+                m_iIndentNum += 1;
+                m_ssJson << "\n" << Indent();
+                typename std::set<T>::iterator it = vector.begin();
+                *this & *it;
+                for (++it; it != vector.end(); ++it)
+                {
+                    m_ssJson << "," << "\n" << Indent();
+                    *this & *it;
                 }
                 m_iIndentNum -= 1;
                 m_ssJson << "\n" << Indent();
@@ -466,6 +510,45 @@ class CJsonDecoder
                 T t;
                 *this & t;
                 v.push_back(t);
+            }
+            m_szKeyName = szKeyName;
+            m_pCurrJsonValue = pJsonValue;
+
+            return *this;
+        }
+
+      template <class T>
+        CJsonDecoder& operator & (std::set<T>& v)
+        {
+            Json::Value *pValue = NULL;
+            if (m_szKeyName == NULL)
+            {
+                pValue = m_pCurrJsonValue;
+            }
+            else
+            {
+                if (!m_pCurrJsonValue->isMember(m_szKeyName))
+                {
+                    return *this;
+                }
+                pValue = &(*m_pCurrJsonValue)[m_szKeyName];
+            }
+
+            if (!pValue->isArray())
+            {
+                return *this;
+            }
+
+            Json::Value *pJsonValue = m_pCurrJsonValue;
+            const char *szKeyName = m_szKeyName;
+            for (Json::ArrayIndex i = 0; i < pValue->size(); ++i)
+            {
+                m_szKeyName = NULL;
+                m_pCurrJsonValue = &(*pValue)[i];
+
+                T t;
+                *this & t;
+                v.insert(t);
             }
             m_szKeyName = szKeyName;
             m_pCurrJsonValue = pJsonValue;
