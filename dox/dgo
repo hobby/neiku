@@ -23,6 +23,9 @@
 #     2016/04/10: 支持基于dfw实现N层跳板机快速登录指定主机
 #                 支持rsa/passwd登录验证方式
 #     2016/05/10: 支持通过环境变量传递password，提高安全
+#     2019/02/19: 默认使用home目录下的配置，提高灵活性
+#                 eval赋值计算中，值部分补充单引号，增强可用性
+#
 #
 ############################################################
 
@@ -41,18 +44,18 @@ if [ "$host" = "" ] ; then
 fi
 
 # load host config
-hosts=./doxrc_hosts
+hosts=$HOME/doxrc_hosts
 hname=; htype=; haddr=; hport=; huser=; hpass=; hproxys=;
-eval `grep -v -E '^#|^$' $hosts 2>/dev/null\
-      | grep $host 2>/dev/null             \
-      | head -n1                           \
-      | awk '{printf "hname=%s; htype=%s;  \
-                      haddr=%s; hport=%s;  \
-                      huser=%s; hpass=%s;  \
-                      hproxys=%s;"         \
-                     , $1, $2              \
-                     , $3, $4              \
-                     , $5, $6              \
+eval `grep -v -E '^#|^$' $hosts 2>/dev/null                \
+      | grep $host 2>/dev/null                             \
+      | head -n1                                           \
+      | awk '{printf "hname='\''%s'\''; htype='\''%s'\'';  \
+                      haddr='\''%s'\''; hport='\''%s'\'';  \
+                      huser='\''%s'\''; hpass='\''%s'\'';  \
+                      hproxys='\''%s'\'';"                 \
+                     , $1, $2                              \
+                     , $3, $4                              \
+                     , $5, $6                              \
                      , $7}'`
 
 if [    -z "$hname" -o -z "$htype" \
