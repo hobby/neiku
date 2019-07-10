@@ -15,6 +15,8 @@ git config --global alias.lg 'log --pretty=oneline --graph --abbrev-commit --dec
 git config --global alias.fh 'fetch'
 git config --global alias.pl 'pull'
 git config --global alias.ps 'push'
+git config --global alias.fu 'fetch upstream -v'
+git config --global alias.mu 'merge upstream/master'
 
 # 解决中文名称显示成"\xxx\xxx\xxx"的问题
 git config --global core.quotepath false
