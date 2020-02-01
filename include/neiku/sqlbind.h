@@ -48,14 +48,14 @@ public:
     void setValue(uint32_t dwIndex,int64_t llValue)
     {
         char szValue[32] = {0};
-        snprintf(szValue,sizeof(szValue),"%"PRId64,llValue);
+        snprintf(szValue,sizeof(szValue),"%" PRId64,llValue);
         mpStr.insert(std::map<uint32_t,std::string>::value_type(dwIndex,szValue));
     }
     
     void setValue(uint32_t dwIndex,uint64_t ullValue)
     {
         char szValue[32] = {0};
-        snprintf(szValue,sizeof(szValue),"%"PRIu64,ullValue);
+        snprintf(szValue,sizeof(szValue),"%" PRIu64,ullValue);
         mpStr.insert(std::map<uint32_t,std::string>::value_type(dwIndex,szValue));
     }
     
@@ -76,7 +76,7 @@ public:
     SqlBind & operator << (uint64_t dwIndex)
     {
         char szBuff[20] = {0};
-        snprintf(szBuff,sizeof(szBuff),"%"PRIu64,dwIndex);
+        snprintf(szBuff,sizeof(szBuff),"%" PRIu64,dwIndex);
         sPattern.append(szBuff);
         return *this;
     }
@@ -84,7 +84,7 @@ public:
     SqlBind & operator << (int64_t dwIndex)
     {
         char szBuff[20] = {0};
-        snprintf(szBuff,sizeof(szBuff),"%"PRId64,dwIndex);
+        snprintf(szBuff,sizeof(szBuff),"%" PRId64,dwIndex);
         sPattern.append(szBuff);
         return *this;
     }

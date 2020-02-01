@@ -229,6 +229,8 @@ public:
         return render(dumper.str());
     }
 
+    int render(const std::string& output);
+
 private:
     bool init();
     void destroy();
@@ -237,7 +239,6 @@ private:
     void setErrMsg(const char* szErrMsg);
 
     int render(const char* szTplPath, STRING& stOutput);
-    int render(const std::string& output);
 
 private:
     void setValue(const char * pHdfDoc);

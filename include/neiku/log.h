@@ -78,25 +78,25 @@
 #ifndef __NO_NEIKU_SINGLETON_LOG__
 #include <neiku/singleton.h> 
 
-#define LOG SINGLETON(neiku::CLog)
+#define XLOG SINGLETON(neiku::CLog)
 
 #define LOG_ERR(format, args...) \
-        LOG->DoLog(  neiku::CLog::LOG_LEVEL_ERR \
-                   , "[%s][pid:%d][%s:%d][%s][ERR]: "format"\n" \
-                   , LOG->GetTimeStr(), getpid() \
-                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
+        XLOG->DoLog(  neiku::CLog::LOG_LEVEL_ERR \
+                   , "[%s][pid:%d][%s:%d][%s][ERR]: " format "\n" \
+                   , XLOG->GetTimeStr(), getpid() \
+                   , XLOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_MSG(format, args...) \
-        LOG->DoLog(  neiku::CLog::LOG_LEVEL_MSG \
-                   , "[%s][pid:%d][%s:%d][%s][MSG]: "format"\n" \
-                   , LOG->GetTimeStr(), getpid() \
-                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
+        XLOG->DoLog(  neiku::CLog::LOG_LEVEL_MSG \
+                   , "[%s][pid:%d][%s:%d][%s][MSG]: " format "\n" \
+                   , XLOG->GetTimeStr(), getpid() \
+                   , XLOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #define LOG_DBG(format, args...) \
-        LOG->DoLog(  neiku::CLog::LOG_LEVEL_DBG \
-                   , "[%s][pid:%d][%s:%d][%s][DBG]: "format"\n" \
-                   , LOG->GetTimeStr(), getpid() \
-                   , LOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
+        XLOG->DoLog(  neiku::CLog::LOG_LEVEL_DBG \
+                   , "[%s][pid:%d][%s:%d][%s][DBG]: " format "\n" \
+                   , XLOG->GetTimeStr(), getpid() \
+                   , XLOG->GetFileName(__FILE__), __LINE__, __FUNCTION__ \
                    , ##args);
 #endif
 

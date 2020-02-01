@@ -51,7 +51,7 @@ VPATH += ${SRCS} # make内置的源文件目录配置
 .c.o:
 	gcc -g -fPIC -Wall -o $@ -c $^ ${INCS}
 .cpp.o:
-	g++ -g -fPIC -Wall -o $@ -c $^ ${INCS}
+	g++ -std=c++11 -g -O2 -fPIC -Wno-deprecated -Wall -c $^ ${INCS}
 .o:
 	g++ -g -o $@ $^ ${LIBS}
 

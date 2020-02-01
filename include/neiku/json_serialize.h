@@ -43,6 +43,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 #include "jsoncpp/jsoncpp.h"
 #include "neiku/serialize.h"
